@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Typography, Box, Alert, Grid, Card, CardContent } from '@mui/material';
+import { Box, Alert, Tabs, Tab, Typography, Paper } from '@mui/material';
+import CustomTable from '../../components/common/CustomTable';
 import { StatisticsAPI } from '../../services/api';
+import TeacherStatisticsPage from './TeacherStatisticsPage';
 
 const StatisticsPage = () => {
   const [statsByDepartment, setStatsByDepartment] = useState([]);
@@ -8,6 +10,8 @@ const StatisticsPage = () => {
   const [statsByAge, setStatsByAge] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'chart'
 
   const fetchStatistics = async () => {
     setLoading(true);
@@ -19,9 +23,10 @@ const StatisticsPage = () => {
         StatisticsAPI.byAge()
       ]);
       
-      setStatsByDepartment(departmentResponse.data);
-      setStatsByDegree(degreeResponse.data);
-      setStatsByAge(ageResponse.data);
+      // Extract data and total from responses
+      setStatsByDepartment(departmentResponse.data.data || []);
+      setStatsByDegree(degreeResponse.data.data || []);
+      setStatsByAge(ageResponse.data.data || []);
     } catch (err) {
       console.error('Failed to fetch statistics:', err);
       setError('Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.');
@@ -34,66 +39,112 @@ const StatisticsPage = () => {
     fetchStatistics();
   }, []);
 
-  return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Thống Kê
-      </Typography>
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+  };
+
+  // Department statistics columns
+  const departmentColumns = [
+    { id: 'shortName', label: 'Mã khoa', width: '15%' },
+    { id: 'label', label: 'Tên khoa/bộ môn', width: '55%' },
+    { 
+      id: 'count', 
+      label: 'Số lượng giáo viên', 
+      width: '30%',
+      align: 'center',
+      render: (row) => row.count
+    }
+  ];
+
+  // Degree statistics columns
+  const degreeColumns = [
+    { id: 'shortName', label: 'Mã bằng cấp', width: '15%' },
+    { id: 'label', label: 'Tên bằng cấp', width: '55%' },
+    { 
+      id: 'count', 
+      label: 'Số lượng giáo viên', 
+      width: '30%',
+      align: 'center',
+      render: (row) => row.count
+    }
+  ];
+
+  // Age statistics columns
+  const ageColumns = [
+    { id: 'label', label: 'Nhóm tuổi', width: '70%' },
+    { 
+      id: 'count', 
+      label: 'Số lượng giáo viên', 
+      width: '30%',
+      align: 'center',
+      render: (row) => row.count
+    }
+  ];
+
+  return (
+    <Box sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
-      {loading ? (
-        <Typography>Đang tải dữ liệu...</Typography>
+      {/* View mode selector */}
+      <Paper sx={{ mb: 2, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6">Thống kê giáo viên</Typography>
+        <Box>
+          <Tabs value={viewMode} onChange={(e, val) => handleViewModeChange(val)}>
+            <Tab label="Bảng" value="table" />
+            <Tab label="Biểu đồ" value="chart" />
+          </Tabs>
+        </Box>
+      </Paper>
+
+      {viewMode === 'table' ? (
+        <>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Tabs value={activeTab} onChange={handleTabChange}>
+              <Tab label="Thống kê theo khoa" />
+              <Tab label="Thống kê theo bằng cấp" />
+              <Tab label="Thống kê theo độ tuổi" />
+            </Tabs>
+          </Box>
+
+          <Box sx={{ flexGrow: 1, display: activeTab === 0 ? 'block' : 'none' }}>
+            <CustomTable
+              columns={departmentColumns}
+              data={statsByDepartment}
+              loading={loading}
+              pagination={false}
+            />
+          </Box>
+
+          <Box sx={{ flexGrow: 1, display: activeTab === 1 ? 'block' : 'none' }}>
+            <CustomTable
+              columns={degreeColumns}
+              data={statsByDegree}
+              loading={loading}
+              pagination={false}
+            />
+          </Box>
+
+          <Box sx={{ flexGrow: 1, display: activeTab === 2 ? 'block' : 'none' }}>
+            <CustomTable
+              columns={ageColumns}
+              data={statsByAge}
+              loading={loading}
+              pagination={false}
+            />
+          </Box>
+        </>
       ) : (
-        <Grid container spacing={3} mt={1}>
-          <Grid item xs={12}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Thống kê theo khoa/bộ môn
-                </Typography>
-                {/* Chart sẽ được thêm vào sau */}
-                <Typography variant="body2" color="text.secondary">
-                  Biểu đồ sẽ được bổ sung sau
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Thống kê theo bằng cấp
-                </Typography>
-                {/* Chart sẽ được thêm vào sau */}
-                <Typography variant="body2" color="text.secondary">
-                  Biểu đồ sẽ được bổ sung sau
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Thống kê theo độ tuổi
-                </Typography>
-                {/* Chart sẽ được thêm vào sau */}
-                <Typography variant="body2" color="text.secondary">
-                  Biểu đồ sẽ được bổ sung sau
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <TeacherStatisticsPage />
       )}
-    </>
+    </Box>
   );
 };
 

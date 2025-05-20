@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Typography, Box, Alert } from '@mui/material';
-import DataTable from '../../components/common/DataTable';
+import { Box, Alert } from '@mui/material';
+import CustomTable from '../../components/common/CustomTable';
 import { DegreeAPI } from '../../services/api';
 
 const DegreesPage = () => {
@@ -13,7 +13,7 @@ const DegreesPage = () => {
     setError(null);
     try {
       const response = await DegreeAPI.getAll();
-      setDegrees(response.data);
+      setDegrees(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch degrees:', err);
       setError('Không thể tải dữ liệu bằng cấp. Vui lòng thử lại sau.');
@@ -27,20 +27,13 @@ const DegreesPage = () => {
   }, []);
 
   const columns = [
-    { id: 'code', label: 'Mã bằng cấp', width: '15%' },
-    { id: 'name', label: 'Tên bằng cấp', width: '45%' },
-    { 
-      id: 'salaryCoefficient', 
-      label: 'Hệ số lương', 
-      align: 'right',
-      width: '20%',
-      render: (row) => row.salaryCoefficient.toFixed(2)
-    },
+    { id: 'shortName', label: 'Tên viết tắt', width: '20%' },
+    { id: 'fullName', label: 'Tên bằng cấp', width: '60%' },
     { 
       id: 'createdAt', 
       label: 'Ngày tạo', 
       width: '20%',
-      render: (row) => new Date(row.createdAt).toLocaleDateString('vi-VN')
+      render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString('vi-VN') : 'N/A'
     }
   ];
 
@@ -48,38 +41,31 @@ const DegreesPage = () => {
     // To be implemented
   };
 
-  const handleEditDegree = (degree) => {
+  const handleEditDegree = () => {
     // To be implemented
   };
 
-  const handleDeleteDegree = (degree) => {
+  const handleDeleteDegree = () => {
     // To be implemented
   };
 
   return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Quản lý Bằng Cấp
-      </Typography>
-
+    <Box sx={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
-      <Box mt={3}>
-        <DataTable
-          title="Danh sách bằng cấp"
-          columns={columns}
-          data={degrees}
-          loading={loading}
-          onAdd={handleAddDegree}
-          onEdit={handleEditDegree}
-          onDelete={handleDeleteDegree}
-        />
-      </Box>
-    </>
+      <CustomTable
+        columns={columns}
+        data={degrees}
+        loading={loading}
+        onAdd={handleAddDegree}
+        onEdit={handleEditDegree}
+        onDelete={handleDeleteDegree}
+      />
+    </Box>
   );
 };
 

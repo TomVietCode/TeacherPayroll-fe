@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Typography, Box, Alert } from '@mui/material';
-import DataTable from '../../components/common/DataTable';
+import { Box, Alert } from '@mui/material';
+import CustomTable from '../../components/common/CustomTable';
 import { DepartmentAPI } from '../../services/api';
 
 const DepartmentsPage = () => {
@@ -13,7 +13,7 @@ const DepartmentsPage = () => {
     setError(null);
     try {
       const response = await DepartmentAPI.getAll();
-      setDepartments(response.data);
+      setDepartments(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch departments:', err);
       setError('Không thể tải dữ liệu khoa/bộ môn. Vui lòng thử lại sau.');
@@ -27,13 +27,13 @@ const DepartmentsPage = () => {
   }, []);
 
   const columns = [
-    { id: 'code', label: 'Mã khoa', width: '15%' },
-    { id: 'name', label: 'Tên khoa/bộ môn', width: '60%' },
+    { id: 'shortName', label: 'Mã khoa', width: '20%' },
+    { id: 'fullName', label: 'Tên khoa', width: '60%' },
     { 
       id: 'createdAt', 
       label: 'Ngày tạo', 
-      width: '25%',
-      render: (row) => new Date(row.createdAt).toLocaleDateString('vi-VN')
+      width: '20%',
+      render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString('vi-VN') : 'N/A'
     }
   ];
 
@@ -41,38 +41,31 @@ const DepartmentsPage = () => {
     // To be implemented
   };
 
-  const handleEditDepartment = (department) => {
+  const handleEditDepartment = () => {
     // To be implemented
   };
 
-  const handleDeleteDepartment = (department) => {
+  const handleDeleteDepartment = () => {
     // To be implemented
   };
 
   return (
-    <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Quản lý Khoa/Bộ Môn
-      </Typography>
-
+    <Box sx={{ height: '100%', width: '100%' }}>
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
-      <Box mt={3}>
-        <DataTable
-          title="Danh sách khoa/bộ môn"
-          columns={columns}
-          data={departments}
-          loading={loading}
-          onAdd={handleAddDepartment}
-          onEdit={handleEditDepartment}
-          onDelete={handleDeleteDepartment}
-        />
-      </Box>
-    </>
+      <CustomTable
+        columns={columns}
+        data={departments}
+        loading={loading}
+        onAdd={handleAddDepartment}
+        onEdit={handleEditDepartment}
+        onDelete={handleDeleteDepartment}
+      />
+    </Box>
   );
 };
 

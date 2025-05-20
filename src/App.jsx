@@ -3,9 +3,6 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import MainLayout from './components/layout/MainLayout';
 import theme from './theme/theme';
 
-// Trang chủ
-import HomePage from './pages/home/HomePage';
-
 // Các trang quản lý
 import DegreesPage from './pages/degrees/DegreesPage';
 import DepartmentsPage from './pages/departments/DepartmentsPage';
@@ -26,7 +23,7 @@ const router = createBrowserRouter([
     path: '/',
     element: (
       <MainLayout>
-        <HomePage />
+        <StatisticsPage />
       </MainLayout>
     ),
   },
