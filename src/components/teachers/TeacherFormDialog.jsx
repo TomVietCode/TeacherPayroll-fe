@@ -186,7 +186,7 @@ const TeacherFormDialog = ({
     <Dialog 
       open={open} 
       onClose={onClose} 
-      maxWidth="sm" 
+      maxWidth="md" 
       fullWidth
       PaperProps={{
         sx: { borderRadius: 2 }
@@ -196,149 +196,174 @@ const TeacherFormDialog = ({
         {isEditMode ? 'Chỉnh sửa giáo viên' : 'Thêm giáo viên mới'}
       </DialogTitle>
       
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: 3 }}>
         {loading ? (
           <Box display="flex" justifyContent="center" alignItems="center" p={3}>
             <CircularProgress size={40} />
           </Box>
         ) : (
-          <Grid container spacing={2} py={1}>
-            <Grid item xs={12}>
-              <Box mb={1} display="flex" alignItems="center">
-                <Typography variant="body2" mr={2}>
-                  Mã giáo viên:
-                </Typography>
+          <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+            <Grid container spacing={3}>
+              {/* Mã giáo viên row */}
+              <Grid item container xs={12} alignItems="center" spacing={2} width="100%">
                 {!isEditMode && (
-                  <FormControlLabel
-                    control={
-                      <Checkbox 
-                        checked={autoGenerateCode} 
-                        onChange={handleAutoGenerateToggle}
-                        size="small"
-                      />
-                    }
-                    label={<Typography variant="body2">Tự động tạo mã</Typography>}
-                  />
+                  <Grid item xs={12} sm={4}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox 
+                          checked={autoGenerateCode} 
+                          onChange={handleAutoGenerateToggle}
+                          size="medium"
+                        />
+                      }
+                      label={<Typography variant="body1">Tự động tạo mã</Typography>}
+                    />
+                  </Grid>
                 )}
-              </Box>
-              <TextField
-                name="code"
-                label="Mã giáo viên"
-                value={formData.code}
-                onChange={handleChange}
-                fullWidth
-                disabled={isEditMode || autoGenerateCode}
-                error={!!errors.code}
-                helperText={errors.code}
-                variant="outlined"
-                size="small"
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                name="fullName"
-                label="Họ và tên"
-                value={formData.fullName}
-                onChange={handleChange}
-                fullWidth
-                required
-                error={!!errors.fullName}
-                helperText={errors.fullName}
-                variant="outlined"
-                size="small"
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
-                <DatePicker
-                  label="Ngày sinh"
-                  value={formData.dateOfBirth}
-                  onChange={handleDateChange}
-                  format="dd/MM/yyyy"
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: true,
-                      error: !!errors.dateOfBirth,
-                      helperText: errors.dateOfBirth,
-                      size: "small"
-                    }
-                  }}
+                <Grid item xs={12} sm={isEditMode ? 12 : 8}>
+                  <TextField
+                    name="code"
+                    label="Mã giáo viên"
+                    value={formData.code}
+                    onChange={handleChange}
+                    fullWidth
+                    disabled={isEditMode || autoGenerateCode}
+                    error={!!errors.code}
+                    helperText={errors.code}
+                    variant="outlined"
+                    size="medium"
+                  />
+                </Grid>
+              </Grid>
+              
+              {/* Họ và tên row */}
+              <Grid item xs={12} width="100%">
+                <TextField
+                  name="fullName"
+                  label="Họ và tên"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  error={!!errors.fullName}
+                  helperText={errors.fullName}
+                  variant="outlined"
+                  size="medium"
                 />
-              </LocalizationProvider>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="phone"
-                label="Điện thoại"
-                value={formData.phone}
-                onChange={handleChange}
-                fullWidth
-                error={!!errors.phone}
-                helperText={errors.phone}
-                variant="outlined"
-                size="small"
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                name="email"
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                fullWidth
-                error={!!errors.email}
-                helperText={errors.email}
-                variant="outlined"
-                size="small"
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={!!errors.departmentId} size="small">
-                <InputLabel id="department-select-label">Khoa</InputLabel>
-                <Select
-                  labelId="department-select-label"
-                  name="departmentId"
-                  value={formData.departmentId}
-                  onChange={handleChange}
-                  label="Khoa"
-                >
-                  {departments.map(dept => (
-                    <MenuItem key={dept.id} value={dept.id}>
-                      {dept.fullName}
+              </Grid>
+              
+              {/* Ngày sinh và Điện thoại Email row */}
+              <Grid item container xs={12} spacing={3}>
+                <Grid item xs={12} sm={4}>
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
+                    <DatePicker
+                      label="Ngày sinh"
+                      value={formData.dateOfBirth}
+                      onChange={handleDateChange}
+                      format="dd/MM/yyyy"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          required: true,
+                          error: !!errors.dateOfBirth,
+                          helperText: errors.dateOfBirth,
+                          size: "medium"
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
+                </Grid>
+                
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    name="phone"
+                    label="Điện thoại"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    fullWidth
+                    error={!!errors.phone}
+                    helperText={errors.phone}
+                    variant="outlined"
+                    size="medium"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    name="email"
+                    label="Email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    fullWidth
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    variant="outlined"
+                    size="medium"
+                  />
+                </Grid>
+              </Grid>
+              
+              {/* Khoa và Bằng cấp row */}
+              <Grid item xs={12} sm={6} width="40%">
+                <FormControl fullWidth required error={!!errors.departmentId} size="medium">
+                  <Select
+                    labelId="department-select-label"
+                    name="departmentId"
+                    value={formData.departmentId}
+                    onChange={handleChange}
+                    displayEmpty
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300
+                        }
+                      }
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      Chọn khoa
                     </MenuItem>
-                  ))}
-                </Select>
-                {errors.departmentId && <FormHelperText>{errors.departmentId}</FormHelperText>}
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={!!errors.degreeId} size="small">
-                <InputLabel id="degree-select-label">Bằng cấp</InputLabel>
-                <Select
-                  labelId="degree-select-label"
-                  name="degreeId"
-                  value={formData.degreeId}
-                  onChange={handleChange}
-                  label="Bằng cấp"
-                >
-                  {degrees.map(degree => (
-                    <MenuItem key={degree.id} value={degree.id}>
-                      {degree.fullName}
+                    {departments.map(dept => (
+                      <MenuItem key={dept.id} value={dept.id}>
+                        {dept.fullName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.departmentId && <FormHelperText>{errors.departmentId}</FormHelperText>}
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} sm={6} width="40%">
+                <FormControl fullWidth required error={!!errors.degreeId} size="medium">
+                  <Select
+                    labelId="degree-select-label"
+                    name="degreeId"
+                    value={formData.degreeId}
+                    onChange={handleChange}
+                    displayEmpty
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300
+                        }
+                      }
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      Chọn bằng cấp
                     </MenuItem>
-                  ))}
-                </Select>
-                {errors.degreeId && <FormHelperText>{errors.degreeId}</FormHelperText>}
-              </FormControl>
+                    {degrees.map(degree => (
+                      <MenuItem key={degree.id} value={degree.id}>
+                        {degree.fullName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.degreeId && <FormHelperText>{errors.degreeId}</FormHelperText>}
+                </FormControl>
+              </Grid>
             </Grid>
-          </Grid>
+          </Box>
         )}
       </DialogContent>
       

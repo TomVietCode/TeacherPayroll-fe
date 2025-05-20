@@ -96,12 +96,12 @@ const TeacherStatisticsPage = () => {
               <PieChart>
                 <Pie
                   data={pieData}
-                  nameKey="fullName"
+                  nameKey="shortName"
                   dataKey="count"
                   cx="50%"
                   cy="50%"
                   outerRadius={130}
-                  label={({ fullName, count }) => `${fullName}: ${count}`}
+                  label={({ shortName, count }) => `${shortName}: ${count}`}
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -168,12 +168,12 @@ const TeacherStatisticsPage = () => {
               <PieChart>
                 <Pie
                   data={pieData}
-                  nameKey="fullName"
+                  nameKey="shortName"
                   dataKey="count"
                   cx="50%"
                   cy="50%"
                   outerRadius={130}
-                  label={({ fullName, count }) => `${fullName}: ${count}`}
+                  label={({ shortName, count }) => `${shortName}: ${count}`}
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

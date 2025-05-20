@@ -49,8 +49,8 @@ const StatisticsPage = () => {
 
   // Department statistics columns
   const departmentColumns = [
-    { id: 'shortName', label: 'Mã khoa', width: '15%' },
-    { id: 'label', label: 'Tên khoa/bộ môn', width: '55%' },
+    { id: 'shortName', label: 'Tên viết tắt', width: '15%' },
+    { id: 'fullName', label: 'Tên khoa', width: '55%' },
     { 
       id: 'count', 
       label: 'Số lượng giáo viên', 
@@ -62,8 +62,8 @@ const StatisticsPage = () => {
 
   // Degree statistics columns
   const degreeColumns = [
-    { id: 'shortName', label: 'Mã bằng cấp', width: '15%' },
-    { id: 'label', label: 'Tên bằng cấp', width: '55%' },
+    { id: 'shortName', label: 'Tên viết tắt', width: '15%' },
+    { id: 'fullName', label: 'Tên bằng cấp', width: '55%' },
     { 
       id: 'count', 
       label: 'Số lượng giáo viên', 
