@@ -7,6 +7,8 @@ import theme from './theme/theme';
 import DegreesPage from './pages/degrees/DegreesPage';
 import DepartmentsPage from './pages/departments/DepartmentsPage';
 import TeachersPage from './pages/teachers/TeachersPage';
+import SubjectsPage from './pages/subjects/SubjectsPage';
+import SemestersPage from './pages/semesters/SemestersPage';
 import StatisticsPage from './pages/statistics/StatisticsPage';
 
 // Import CSS
@@ -48,6 +50,22 @@ const router = createBrowserRouter([
     element: (
       <MainLayout>
         <TeachersPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/subjects',
+    element: (
+      <MainLayout>
+        <SubjectsPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/semesters',
+    element: (
+      <MainLayout>
+        <SemestersPage />
       </MainLayout>
     ),
   },

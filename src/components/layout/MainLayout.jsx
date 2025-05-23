@@ -14,6 +14,9 @@ import DomainIcon from '@mui/icons-material/Domain';
 import PersonIcon from '@mui/icons-material/Person';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
 import PeopleIcon from '@mui/icons-material/People';
+import BookIcon from '@mui/icons-material/Book';
+import ClassIcon from '@mui/icons-material/Class';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
@@ -25,6 +28,8 @@ const getSectionName = (path) => {
   if (path.includes('degrees')) return 'Bằng cấp';
   if (path.includes('departments')) return 'Khoa/Bộ môn';
   if (path.includes('teachers')) return 'Giáo viên';
+  if (path.includes('subjects')) return 'Học phần';
+  if (path.includes('semesters')) return 'Kỳ học';
   return '';
 };
 
@@ -37,6 +42,7 @@ function MainLayout({ children }) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Default open on desktop, closed on mobile
   const [teacherMenuOpen, setTeacherMenuOpen] = useState(true);
+  const [classMenuOpen, setClassMenuOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -53,12 +59,27 @@ function MainLayout({ children }) {
     }
   };
 
+  const handleClassMenuToggle = () => {
+    if (sidebarOpen) {
+      setClassMenuOpen(!classMenuOpen);
+    } else {
+      setSidebarOpen(true);
+      setClassMenuOpen(true);
+    }
+  };
+
   // Submenu items for teacher management
   const teacherSubMenuItems = [
     { text: 'Thống kê', icon: <EqualizerIcon />, path: '/' },
     { text: 'Bằng cấp', icon: <SchoolIcon />, path: '/degrees' },
     { text: 'Khoa/Bộ môn', icon: <DomainIcon />, path: '/departments' },
     { text: 'Giáo viên', icon: <PersonIcon />, path: '/teachers' },
+  ];
+
+  // Submenu items for class management
+  const classSubMenuItems = [
+    { text: 'Học phần', icon: <BookIcon />, path: '/subjects' },
+    { text: 'Kỳ học', icon: <CalendarTodayIcon />, path: '/semesters' },
   ];
   
   const drawer = (
@@ -103,10 +124,70 @@ function MainLayout({ children }) {
           </ListItemButton>
         </ListItem>
         
-        {/* Submenu items */}
+        {/* Teacher Submenu items */}
         <Collapse in={sidebarOpen && teacherMenuOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {teacherSubMenuItems.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton 
+                  selected={location.pathname === item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (isMobile) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  sx={{ 
+                    pl: 4,
+                    minHeight: 40,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Collapse>
+
+        {/* Class Management Dropdown */}
+        <ListItem disablePadding>
+          <ListItemButton 
+            onClick={handleClassMenuToggle}
+            sx={{ 
+              justifyContent: sidebarOpen ? 'initial' : 'center',
+              px: sidebarOpen ? 2.5 : 'auto',
+              minHeight: 48,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: sidebarOpen ? 2 : 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <ClassIcon />
+            </ListItemIcon>
+            {sidebarOpen && (
+              <>
+                <ListItemText primary="Quản lý lớp học phần" />
+                {classMenuOpen ? <ExpandLess /> : <ExpandMore />}
+              </>
+            )}
+          </ListItemButton>
+        </ListItem>
+        
+        {/* Class Submenu items */}
+        <Collapse in={sidebarOpen && classMenuOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {classSubMenuItems.map((item) => (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton 
                   selected={location.pathname === item.path}

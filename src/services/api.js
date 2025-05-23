@@ -36,6 +36,24 @@ export const TeacherAPI = {
   delete: (id) => api.delete(`/teachers/${id}`),
 };
 
+// Subject API endpoints
+export const SubjectAPI = {
+  getAll: () => api.get('/subjects'),
+  getById: (id) => api.get(`/subjects/${id}`),
+  create: (data) => api.post('/subjects', data),
+  update: (id, data) => api.patch(`/subjects/${id}`, data),
+  delete: (id) => api.delete(`/subjects/${id}`),
+};
+
+// Semester API endpoints
+export const SemesterAPI = {
+  getAll: () => api.get('/semesters'),
+  getById: (id) => api.get(`/semesters/${id}`),
+  create: (data) => api.post('/semesters', data),
+  update: (id, data) => api.patch(`/semesters/${id}`, data),
+  delete: (id) => api.delete(`/semesters/${id}`),
+};
+
 // Statistics API endpoints
 export const StatisticsAPI = {
   byDepartment: () => api.get('/statistics/by-department'),
