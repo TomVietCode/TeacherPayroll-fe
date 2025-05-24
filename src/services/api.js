@@ -54,6 +54,16 @@ export const SemesterAPI = {
   delete: (id) => api.delete(`/semesters/${id}`),
 };
 
+// CourseClass API endpoints
+export const CourseClassAPI = {
+  getAll: (params) => api.get('/course-classes', { params }),
+  getById: (id) => api.get(`/course-classes/${id}`),
+  getBySemester: (semesterId) => api.get(`/course-classes/by-semester/${semesterId}`),
+  create: (data) => api.post('/course-classes', data),
+  update: (id, data) => api.patch(`/course-classes/${id}`, data),
+  delete: (id) => api.delete(`/course-classes/${id}`),
+};
+
 // Statistics API endpoints
 export const StatisticsAPI = {
   byDepartment: () => api.get('/statistics/by-department'),

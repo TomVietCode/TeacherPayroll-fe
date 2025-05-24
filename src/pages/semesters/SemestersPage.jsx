@@ -41,8 +41,8 @@ const SemestersPage = () => {
     { 
       id: 'displayName', 
       label: 'Tên kỳ', 
-      width: '15%',
-      render: (row) => row.displayName || `${row.termNumber}${row.isSupplementary ? '-phụ' : ''}`
+      width: '20%',
+      render: (row) => row.displayName || `${row.termNumber}${row.isSupplementary ? '-Phụ' : ''}`
     },
     { id: 'academicYear', label: 'Năm học', width: '20%' },
     { 
@@ -57,12 +57,7 @@ const SemestersPage = () => {
       width: '20%',
       render: (row) => row.endDate ? new Date(row.endDate).toLocaleDateString('vi-VN') : 'N/A'
     },
-    { 
-      id: 'createdAt', 
-      label: 'Ngày tạo', 
-      width: '25%',
-      render: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString('vi-VN') : 'N/A'
-    }
+
   ];
 
   const handleAddSemester = () => {
@@ -117,7 +112,7 @@ const SemestersPage = () => {
         open: true,
         message: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,
         severity: 'error'
-      });
+      }); 
     } finally {
       setIsSubmitting(false);
     }
@@ -181,7 +176,7 @@ const SemestersPage = () => {
         onClose={handleConfirmClose}
         onConfirm={handleConfirmDelete}
         title="Xóa kỳ học"
-        content={`Bạn có chắc chắn muốn xóa kỳ học "${selectedSemester?.displayName || (selectedSemester ? `${selectedSemester.termNumber}${selectedSemester.isSupplementary ? '-phụ' : ''}` : '')} - ${selectedSemester?.academicYear || ''}" không?`}
+        content={`Bạn có chắc chắn muốn xóa kỳ học "${selectedSemester?.displayName || (selectedSemester ? `${selectedSemester.termNumber}${selectedSemester.isSupplementary ? '-Phụ' : ''}` : '')} - ${selectedSemester?.academicYear || ''}" không?`}
         confirmText="Xóa"
         severity="error"
       />

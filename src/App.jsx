@@ -9,6 +9,7 @@ import DepartmentsPage from './pages/departments/DepartmentsPage';
 import TeachersPage from './pages/teachers/TeachersPage';
 import SubjectsPage from './pages/subjects/SubjectsPage';
 import SemestersPage from './pages/semesters/SemestersPage';
+import CourseClassesPage from './pages/courseClasses/CourseClassesPage';
 import StatisticsPage from './pages/statistics/StatisticsPage';
 
 // Import CSS
@@ -66,6 +67,14 @@ const router = createBrowserRouter([
     element: (
       <MainLayout>
         <SemestersPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/course-classes',
+    element: (
+      <MainLayout>
+        <CourseClassesPage />
       </MainLayout>
     ),
   },

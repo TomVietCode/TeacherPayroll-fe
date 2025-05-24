@@ -20,16 +20,18 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // Helper function to get section name from path
 const getSectionName = (path) => {
   if (path === '/' || path === '/statistics') return 'Thống kê';
   if (path.includes('degrees')) return 'Bằng cấp';
-  if (path.includes('departments')) return 'Khoa/Bộ môn';
+  if (path.includes('departments')) return 'Khoa';
   if (path.includes('teachers')) return 'Giáo viên';
   if (path.includes('subjects')) return 'Học phần';
   if (path.includes('semesters')) return 'Kỳ học';
+  if (path.includes('course-classes')) return 'Lớp học phần';
   return '';
 };
 
@@ -72,7 +74,7 @@ function MainLayout({ children }) {
   const teacherSubMenuItems = [
     { text: 'Thống kê', icon: <EqualizerIcon />, path: '/' },
     { text: 'Bằng cấp', icon: <SchoolIcon />, path: '/degrees' },
-    { text: 'Khoa/Bộ môn', icon: <DomainIcon />, path: '/departments' },
+    { text: 'Khoa', icon: <DomainIcon />, path: '/departments' },
     { text: 'Giáo viên', icon: <PersonIcon />, path: '/teachers' },
   ];
 
@@ -80,6 +82,7 @@ function MainLayout({ children }) {
   const classSubMenuItems = [
     { text: 'Học phần', icon: <BookIcon />, path: '/subjects' },
     { text: 'Kỳ học', icon: <CalendarTodayIcon />, path: '/semesters' },
+    { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
   ];
   
   const drawer = (
