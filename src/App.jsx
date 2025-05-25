@@ -12,6 +12,10 @@ import SemestersPage from './pages/semesters/SemestersPage';
 import CourseClassesPage from './pages/courseClasses/CourseClassesPage';
 import StatisticsPage from './pages/statistics/StatisticsPage';
 
+// Teacher Assignment Pages
+import TeacherAssignmentList from './pages/teacherAssignments/TeacherAssignmentList';
+import AssignmentForm from './pages/teacherAssignments/AssignmentForm';
+
 // Import CSS
 import './App.css';
 
@@ -83,6 +87,31 @@ const router = createBrowserRouter([
     element: (
       <MainLayout>
         <StatisticsPage />
+      </MainLayout>
+    ),
+  },
+  // Teacher Assignment Routes
+  {
+    path: '/teacher-assignments',
+    element: (
+      <MainLayout>
+        <TeacherAssignmentList />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/teacher-assignments/new',
+    element: (
+      <MainLayout>
+        <AssignmentForm />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/teacher-assignments/edit/:id',
+    element: (
+      <MainLayout>
+        <AssignmentForm />
       </MainLayout>
     ),
   },

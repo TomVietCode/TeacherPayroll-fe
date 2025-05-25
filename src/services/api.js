@@ -9,6 +9,15 @@ const api = axios.create({
   }
 });
 
+// Add request interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
 // Degree API endpoints
 export const DegreeAPI = {
   getAll: () => api.get('/degrees'),
@@ -62,6 +71,27 @@ export const CourseClassAPI = {
   create: (data) => api.post('/course-classes', data),
   update: (id, data) => api.patch(`/course-classes/${id}`, data),
   delete: (id) => api.delete(`/course-classes/${id}`),
+};
+
+// Teacher Assignment API endpoints - Optimized UC2.4 Implementation
+export const TeacherAssignmentAPI = {
+  // Basic CRUD operations
+  getAll: (params = {}) => api.get('/teacher-assignments', { params }),
+  getById: (id) => api.get(`/teacher-assignments/${id}`),
+  create: (data) => api.post('/teacher-assignments', data),
+  update: (id, data) => api.patch(`/teacher-assignments/${id}`, data),
+  delete: (id) => api.delete(`/teacher-assignments/${id}`),
+
+  // Optimized assignment operations
+  bulkAssignment: (data) => api.post('/teacher-assignments/bulk', data),
+  quickAssignment: (data) => api.post('/teacher-assignments/quick', data),
+
+  // Helper endpoints for quick assignment
+  getUnassignedClasses: (params = {}) => api.get('/teacher-assignments/unassigned/classes', { params }),
+  getTeacherWorkload: (teacherId, params = {}) => api.get(`/teacher-assignments/teacher/${teacherId}/workload`, { params }),
+
+  // Statistics and analytics
+  getAssignmentStats: (params = {}) => api.get('/teacher-assignments/stats', { params }),
 };
 
 // Statistics API endpoints

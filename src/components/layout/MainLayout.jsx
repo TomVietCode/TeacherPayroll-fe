@@ -21,6 +21,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import GroupWorkIcon from '@mui/icons-material/GroupWork';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // Helper function to get section name from path
@@ -28,10 +29,11 @@ const getSectionName = (path) => {
   if (path === '/' || path === '/statistics') return 'Thống kê';
   if (path.includes('degrees')) return 'Bằng cấp';
   if (path.includes('departments')) return 'Khoa';
-  if (path.includes('teachers')) return 'Giáo viên';
+  if (path.includes('teachers') && !path.includes('teacher-assignments')) return 'Giáo viên';
   if (path.includes('subjects')) return 'Học phần';
   if (path.includes('semesters')) return 'Kỳ học';
   if (path.includes('course-classes')) return 'Lớp học phần';
+  if (path.includes('teacher-assignments')) return 'Phân công giáo viên';
   return '';
 };
 
@@ -78,11 +80,12 @@ function MainLayout({ children }) {
     { text: 'Giáo viên', icon: <PersonIcon />, path: '/teachers' },
   ];
 
-  // Submenu items for class management
+  // Submenu items for class management (including teacher assignments)
   const classSubMenuItems = [
     { text: 'Học phần', icon: <BookIcon />, path: '/subjects' },
     { text: 'Kỳ học', icon: <CalendarTodayIcon />, path: '/semesters' },
     { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
+    { text: 'Phân công giáo viên', icon: <AssignmentIcon />, path: '/teacher-assignments' },
   ];
   
   const drawer = (
@@ -159,7 +162,7 @@ function MainLayout({ children }) {
           </List>
         </Collapse>
 
-        {/* Class Management Dropdown */}
+        {/* Class Management Dropdown (now includes Teacher Assignment) */}
         <ListItem disablePadding>
           <ListItemButton 
             onClick={handleClassMenuToggle}
@@ -187,7 +190,7 @@ function MainLayout({ children }) {
           </ListItemButton>
         </ListItem>
         
-        {/* Class Submenu items */}
+        {/* Class Submenu items (including Teacher Assignment) */}
         <Collapse in={sidebarOpen && classMenuOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {classSubMenuItems.map((item) => (
