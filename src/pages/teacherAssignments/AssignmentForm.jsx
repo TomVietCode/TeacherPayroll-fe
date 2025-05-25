@@ -28,7 +28,6 @@ import {
   School as SchoolIcon,
   Assignment as AssignmentIcon,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TeacherAssignmentAPI, TeacherAPI, CourseClassAPI } from '../../services/api';
 
@@ -49,10 +48,6 @@ const AssignmentForm = () => {
   const [formData, setFormData] = useState({
     teacherId: '',
     courseClassId: '',
-    assignedDate: format(new Date(), 'yyyy-MM-dd'),
-    status: 'active',
-    workload: '',
-    notes: '',
   });
 
   // Validation state
@@ -74,9 +69,13 @@ const AssignmentForm = () => {
         CourseClassAPI.getAll(),
       ]);
 
+      // Fix: axios response.data contains server response, server response has data property
+      const teachersData = teachersRes.data?.data || teachersRes.data;
+      const courseClassesData = courseClassesRes.data?.data || courseClassesRes.data;
+
       // Ensure data is always arrays
-      setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : []);
-      setCourseClasses(Array.isArray(courseClassesRes.data) ? courseClassesRes.data : []);
+      setTeachers(Array.isArray(teachersData) ? teachersData : []);
+      setCourseClasses(Array.isArray(courseClassesData) ? courseClassesData : []);
     } catch (err) {
       setError('Không thể tải dữ liệu ban đầu');
       console.error('Error loading data:', err);
@@ -97,10 +96,6 @@ const AssignmentForm = () => {
       setFormData({
         teacherId: assignment.teacherId,
         courseClassId: assignment.courseClassId,
-        assignedDate: format(new Date(assignment.assignedDate), 'yyyy-MM-dd'),
-        status: assignment.status,
-        workload: assignment.workload?.toString() || '',
-        notes: assignment.notes || '',
       });
     } catch (err) {
       setError('Không thể tải thông tin phân công');
@@ -136,19 +131,6 @@ const AssignmentForm = () => {
       newErrors.courseClassId = 'Vui lòng chọn lớp học phần';
     }
 
-    if (!formData.assignedDate) {
-      newErrors.assignedDate = 'Vui lòng chọn ngày phân công';
-    } else {
-      const assignedDate = new Date(formData.assignedDate);
-      if (assignedDate > new Date()) {
-        newErrors.assignedDate = 'Ngày phân công không thể trong tương lai';
-      }
-    }
-
-    if (formData.workload && (isNaN(formData.workload) || parseFloat(formData.workload) < 0)) {
-      newErrors.workload = 'Khối lượng công việc phải là số dương';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -165,10 +147,6 @@ const AssignmentForm = () => {
       const submitData = {
         teacherId: formData.teacherId,
         courseClassId: formData.courseClassId,
-        assignedDate: formData.assignedDate,
-        status: formData.status,
-        workload: formData.workload ? parseFloat(formData.workload) : undefined,
-        notes: formData.notes || undefined,
       };
 
       if (isEditing) {
@@ -229,18 +207,18 @@ const AssignmentForm = () => {
 
       {!loading && (
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
+          <Grid container spacing={3} >
             {/* Form Fields */}
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12} md={8} width={"50%"}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Thông tin phân công
                   </Typography>
 
-                  <Grid container spacing={3}>
+                  <Grid container spacing={3} >
                     {/* Teacher Selection */}
-                    <Grid item xs={12}>
+                    <Grid item xs={12} width={"100%"}>
                       <FormControl fullWidth error={!!errors.teacherId}>
                         <InputLabel>Giáo viên *</InputLabel>
                         <Select
@@ -264,7 +242,7 @@ const AssignmentForm = () => {
                     </Grid>
 
                     {/* Course Class Selection */}
-                    <Grid item xs={12}>
+                    <Grid item xs={12} width={"100%"}>
                       <Autocomplete
                         options={courseClasses}
                         getOptionLabel={(option) => `${option.name} (${option.code}) - ${option.subject?.name}`}
@@ -281,7 +259,7 @@ const AssignmentForm = () => {
                           />
                         )}
                         renderOption={(props, option) => (
-                          <Box component="li" {...props}>
+                          <Box component="li" {...props} width={"100%"}>
                             <Box>
                               <Typography variant="body1">
                                 {option.name} ({option.code})
@@ -296,71 +274,13 @@ const AssignmentForm = () => {
                         )}
                       />
                     </Grid>
-
-                    {/* Assignment Date */}
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Ngày phân công *"
-                        type="date"
-                        value={formData.assignedDate}
-                        onChange={(e) => handleFormChange('assignedDate', e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        error={!!errors.assignedDate}
-                        helperText={errors.assignedDate}
-                      />
-                    </Grid>
-
-                    {/* Status */}
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth>
-                        <InputLabel>Trạng thái</InputLabel>
-                        <Select
-                          value={formData.status}
-                          onChange={(e) => handleFormChange('status', e.target.value)}
-                          label="Trạng thái"
-                        >
-                          <MenuItem value="active">Đang hoạt động</MenuItem>
-                          <MenuItem value="inactive">Tạm dừng</MenuItem>
-                          <MenuItem value="completed">Hoàn thành</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Grid>
-
-                    {/* Workload */}
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Khối lượng công việc (Tùy chọn)"
-                        type="number"
-                        value={formData.workload}
-                        onChange={(e) => handleFormChange('workload', e.target.value)}
-                        placeholder="Số tiết"
-                        error={!!errors.workload}
-                        helperText={errors.workload || 'Để trống để sử dụng mặc định từ học phần'}
-                        inputProps={{ min: 0, step: 0.5 }}
-                      />
-                    </Grid>
-
-                    {/* Notes */}
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        label="Ghi chú (Tùy chọn)"
-                        multiline
-                        rows={4}
-                        value={formData.notes}
-                        onChange={(e) => handleFormChange('notes', e.target.value)}
-                        placeholder="Thêm ghi chú cho phân công này..."
-                      />
-                    </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
 
             {/* Summary Panel */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={4} width={"40%"}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
@@ -416,26 +336,12 @@ const AssignmentForm = () => {
                       Chi tiết phân công
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
-                      Ngày: {formData.assignedDate ? format(new Date(formData.assignedDate), 'dd/MM/yyyy') : 'Chưa đặt'}
+                      Giáo viên: {getSelectedTeacher()?.fullName || 'Chưa chọn'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
-                      Trạng thái: {formData.status === 'active' ? 'Đang hoạt động' : formData.status === 'inactive' ? 'Tạm dừng' : 'Hoàn thành'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Khối lượng: {formData.workload || 'Mặc định'} tiết
+                      Lớp học phần: {getSelectedCourseClass()?.name || 'Chưa chọn'}
                     </Typography>
                   </Box>
-
-                  {formData.notes && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="primary">
-                        Ghi chú
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {formData.notes}
-                      </Typography>
-                    </Box>
-                  )}
                 </CardContent>
               </Card>
 

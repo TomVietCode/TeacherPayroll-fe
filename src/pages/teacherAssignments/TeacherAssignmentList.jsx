@@ -11,7 +11,6 @@ import {
   TableRow,
   TablePagination,
   IconButton,
-  Chip,
   Button,
   TextField,
   Grid,
@@ -43,19 +42,16 @@ import {
   FilterList as FilterIcon,
   Clear as ClearIcon,
   Assignment as AssignmentIcon,
-  Speed as SpeedIcon,
   Analytics as AnalyticsIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
   Search as SearchIcon,
   List as ListIcon,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { TeacherAssignmentAPI, TeacherAPI, DepartmentAPI, SemesterAPI } from '../../services/api';
 
 // Import the components for tabs
-import QuickAssignment from './QuickAssignment';
 import BulkAssignment from './BulkAssignment';
 
 const TeacherAssignmentList = () => {
@@ -83,7 +79,6 @@ const TeacherAssignmentList = () => {
     teacherId: '',
     semesterId: '',
     departmentId: '',
-    status: '',
     search: '',
   });
 
@@ -125,9 +120,11 @@ const TeacherAssignmentList = () => {
       });
 
       const response = await TeacherAssignmentAPI.getAll(params);
+      // Fix: handle nested data structure
+      const assignmentsData = response.data?.data || response.data;
       // Ensure assignments is always an array
-      setAssignments(Array.isArray(response.data) ? response.data : []);
-      setTotalItems(response.pagination?.totalItems || 0);
+      setAssignments(Array.isArray(assignmentsData) ? assignmentsData : []);
+      setTotalItems(response.data?.pagination?.totalItems || response.pagination?.totalItems || 0);
     } catch (err) {
       setError('Không thể tải danh sách phân công giáo viên');
       console.error('Error loading assignments:', err);
@@ -147,10 +144,15 @@ const TeacherAssignmentList = () => {
         SemesterAPI.getAll(),
       ]);
 
+      // Fix: axios response.data contains server response, server response has data property
+      const teachersData = teachersRes.data?.data || teachersRes.data;
+      const departmentsData = departmentsRes.data?.data || departmentsRes.data;
+      const semestersData = semestersRes.data?.data || semestersRes.data;
+
       // Ensure all data is arrays
-      setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : []);
-      setDepartments(Array.isArray(departmentsRes.data) ? departmentsRes.data : []);
-      setSemesters(Array.isArray(semestersRes.data) ? semestersRes.data : []);
+      setTeachers(Array.isArray(teachersData) ? teachersData : []);
+      setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
+      setSemesters(Array.isArray(semestersData) ? semestersData : []);
     } catch (err) {
       console.error('Error loading filter options:', err);
       // Set empty arrays on error
@@ -173,7 +175,6 @@ const TeacherAssignmentList = () => {
       teacherId: '',
       semesterId: '',
       departmentId: '',
-      status: '',
       search: '',
     });
     setPage(0);
@@ -192,24 +193,6 @@ const TeacherAssignmentList = () => {
     } catch (err) {
       setError('Không thể xóa phân công');
       console.error('Error deleting assignment:', err);
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'inactive': return 'warning';
-      case 'completed': return 'info';
-      default: return 'default';
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'active': return 'Đang hoạt động';
-      case 'inactive': return 'Tạm dừng';
-      case 'completed': return 'Hoàn thành';
-      default: return status;
     }
   };
 
@@ -245,7 +228,7 @@ const TeacherAssignmentList = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2.5}>
+            <Grid item xs={12} sm={6} md={2.5} width={"20%"}>
               <FormControl fullWidth>
                 <InputLabel>Giáo viên</InputLabel>
                 <Select
@@ -262,7 +245,7 @@ const TeacherAssignmentList = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item xs={12} sm={6} md={2.5} width={"15%"}>
               <FormControl fullWidth>
                 <InputLabel>Khoa</InputLabel>
                 <Select
@@ -279,7 +262,7 @@ const TeacherAssignmentList = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item xs={12} sm={6} md={2.5} width={"25%"}>
               <FormControl fullWidth>
                 <InputLabel>Kỳ học</InputLabel>
                 <Select
@@ -293,21 +276,6 @@ const TeacherAssignmentList = () => {
                       {semester.academicYear} - Kỳ {semester.termNumber}
                     </MenuItem>
                   ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={1.5}>
-              <FormControl fullWidth>
-                <InputLabel>Trạng thái</InputLabel>
-                <Select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  label="Trạng thái"
-                >
-                  <MenuItem value="">Tất cả</MenuItem>
-                  <MenuItem value="active">Đang hoạt động</MenuItem>
-                  <MenuItem value="inactive">Tạm dừng</MenuItem>
-                  <MenuItem value="completed">Hoàn thành</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -335,8 +303,6 @@ const TeacherAssignmentList = () => {
                 <TableCell>Học phần</TableCell>
                 <TableCell>Kỳ học</TableCell>
                 <TableCell>Khoa</TableCell>
-                <TableCell>Trạng thái</TableCell>
-                <TableCell>Ngày phân công</TableCell>
                 <TableCell>Khối lượng</TableCell>
                 <TableCell align="center">Thao tác</TableCell>
               </TableRow>
@@ -344,13 +310,13 @@ const TeacherAssignmentList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
+                  <TableCell colSpan={7} align="center">
                     Đang tải...
                   </TableCell>
                 </TableRow>
               ) : assignments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
+                  <TableCell colSpan={7} align="center">
                     Không tìm thấy phân công nào
                   </TableCell>
                 </TableRow>
@@ -398,18 +364,6 @@ const TeacherAssignmentList = () => {
                     <TableCell>
                       <Typography variant="body2">
                         {assignment.teacher?.department?.shortName}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getStatusLabel(assignment.status)}
-                        color={getStatusColor(assignment.status)}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {format(new Date(assignment.assignedDate), 'dd/MM/yyyy')}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -499,11 +453,6 @@ const TeacherAssignmentList = () => {
             iconPosition="start"
           />
           <Tab 
-            icon={<SpeedIcon />} 
-            label="Phân công nhanh" 
-            iconPosition="start"
-          />
-          <Tab 
             icon={<AssignmentIcon />} 
             label="Phân công hàng loạt" 
             iconPosition="start"
@@ -513,8 +462,7 @@ const TeacherAssignmentList = () => {
 
       {/* Tab Content */}
       {currentTab === 0 && renderAssignmentsList()}
-      {currentTab === 1 && <QuickAssignment onSuccess={handleAssignmentSuccess} />}
-      {currentTab === 2 && <BulkAssignment onSuccess={handleAssignmentSuccess} />}
+      {currentTab === 1 && <BulkAssignment onSuccess={handleAssignmentSuccess} />}
 
       {/* Delete Confirmation Dialog */}
       <Dialog

@@ -44,7 +44,6 @@ import {
   Search as SearchIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { format } from 'date-fns';
 import { TeacherAssignmentAPI, TeacherAPI, CourseClassAPI, DepartmentAPI, SemesterAPI } from '../../services/api';
 
 const BulkAssignment = ({ onSuccess }) => {
@@ -60,8 +59,6 @@ const BulkAssignment = ({ onSuccess }) => {
   // Form state
   const [selectedTeacher, setSelectedTeacher] = useState('');
   const [selectedClasses, setSelectedClasses] = useState([]);
-  const [assignmentDate, setAssignmentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [notes, setNotes] = useState('');
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -94,9 +91,14 @@ const BulkAssignment = ({ onSuccess }) => {
         SemesterAPI.getAll(),
       ]);
 
-      setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : []);
-      setDepartments(Array.isArray(departmentsRes.data) ? departmentsRes.data : []);
-      setSemesters(Array.isArray(semestersRes.data) ? semestersRes.data : []);
+      // Fix: axios response.data contains server response, server response has data property
+      const teachersData = teachersRes.data?.data || teachersRes.data;
+      const departmentsData = departmentsRes.data?.data || departmentsRes.data;
+      const semestersData = semestersRes.data?.data || semestersRes.data;
+
+      setTeachers(Array.isArray(teachersData) ? teachersData : []);
+      setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
+      setSemesters(Array.isArray(semestersData) ? semestersData : []);
     } catch (err) {
       setError('Không thể tải dữ liệu ban đầu');
       console.error('Error loading data:', err);
@@ -125,7 +127,8 @@ const BulkAssignment = ({ onSuccess }) => {
         });
 
         const response = await TeacherAssignmentAPI.getUnassignedClasses(params);
-        let classes = Array.isArray(response.data) ? response.data : [];
+        // Fix: handle nested data structure
+        let classes = Array.isArray(response.data?.data) ? response.data.data : (Array.isArray(response.data) ? response.data : []);
 
         // Apply search filter on frontend
         if (filters.search) {
@@ -151,7 +154,8 @@ const BulkAssignment = ({ onSuccess }) => {
         });
 
         const response = await CourseClassAPI.getAll(params);
-        let classes = Array.isArray(response.data) ? response.data : [];
+        // Fix: handle nested data structure
+        let classes = Array.isArray(response.data?.data) ? response.data.data : (Array.isArray(response.data) ? response.data : []);
 
         // Apply department filter on frontend if needed
         if (filters.departmentId) {
@@ -203,8 +207,6 @@ const BulkAssignment = ({ onSuccess }) => {
       const assignmentData = {
         teacherId: selectedTeacher,
         courseClassIds: selectedClasses,
-        assignedDate: assignmentDate,
-        notes: notes,
       };
 
       const response = await TeacherAssignmentAPI.bulkAssignment(assignmentData);
@@ -213,7 +215,6 @@ const BulkAssignment = ({ onSuccess }) => {
       
       // Reset form
       setSelectedClasses([]);
-      setNotes('');
       
       // Reload classes to reflect changes
       loadCourseClasses();
@@ -303,26 +304,6 @@ const BulkAssignment = ({ onSuccess }) => {
                   </CardContent>
                 </Card>
               )}
-
-              <TextField
-                fullWidth
-                label="Ngày phân công"
-                type="date"
-                value={assignmentDate}
-                onChange={(e) => setAssignmentDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 2 }}
-              />
-
-              <TextField
-                fullWidth
-                label="Ghi chú (Tùy chọn)"
-                multiline
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Thêm ghi chú cho phân công này..."
-              />
             </CardContent>
           </Card>
 
@@ -367,7 +348,7 @@ const BulkAssignment = ({ onSuccess }) => {
         </Grid>
 
         {/* Right Panel - Class Selection */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={8} width={"70%"}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -411,7 +392,7 @@ const BulkAssignment = ({ onSuccess }) => {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid item xs={12} sm={6} md={3} width={"27%"}>
                   <FormControl fullWidth size="small">
                     <InputLabel>Kỳ học</InputLabel>
                     <Select
@@ -428,7 +409,7 @@ const BulkAssignment = ({ onSuccess }) => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid item xs={12} sm={6} md={3} width={"25%"}>
                   <FormControl fullWidth size="small">
                     <InputLabel>Khoa</InputLabel>
                     <Select
