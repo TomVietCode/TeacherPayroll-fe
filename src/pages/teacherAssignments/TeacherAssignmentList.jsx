@@ -492,8 +492,9 @@ const TeacherAssignmentList = () => {
         open={!!error}
         autoHideDuration={6000}
         onClose={() => setError('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={() => setError('')} severity="error">
+        <Alert onClose={() => setError('')} severity="error" variant="filled">
           {error}
         </Alert>
       </Snackbar>
@@ -502,8 +503,9 @@ const TeacherAssignmentList = () => {
         open={!!success}
         autoHideDuration={6000}
         onClose={() => setSuccess('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={() => setSuccess('')} severity="success">
+        <Alert onClose={() => setSuccess('')} severity="success" variant="filled">
           {success}
         </Alert>
       </Snackbar>

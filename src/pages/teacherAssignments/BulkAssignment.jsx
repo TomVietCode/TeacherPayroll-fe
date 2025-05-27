@@ -566,6 +566,7 @@ const BulkAssignment = ({ onSuccess }) => {
         open={!!error}
         autoHideDuration={6000}
         onClose={() => setError('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert onClose={() => setError('')} severity="error">
           {error}
@@ -576,6 +577,7 @@ const BulkAssignment = ({ onSuccess }) => {
         open={!!success}
         autoHideDuration={6000}
         onClose={() => setSuccess('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert onClose={() => setSuccess('')} severity="success">
           {success}

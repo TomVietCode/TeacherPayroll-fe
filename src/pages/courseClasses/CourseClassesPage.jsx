@@ -520,6 +520,7 @@ const CourseClassesPage = () => {
                     <TableCell>Mã lớp</TableCell>
                     <TableCell>Tên lớp</TableCell>
                     <TableCell sx={{ minWidth: 150 }}>Số sinh viên</TableCell>
+                    <TableCell>Giảng viên</TableCell>
                     <TableCell align="center">Thao tác</TableCell>
                   </TableRow>
                 </TableHead>
@@ -552,6 +553,22 @@ const CourseClassesPage = () => {
                               }
                             }}
                           />
+                        </TableCell>
+                        <TableCell>
+                          {courseClass.teacher ? (
+                            <Box>
+                              <Typography variant="body2" fontWeight="medium">
+                                {courseClass.teacher.fullName}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {courseClass.teacher.code}
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                              Chưa phân công
+                            </Typography>
+                          )}
                         </TableCell>
                         <TableCell align="center">
                           <IconButton 

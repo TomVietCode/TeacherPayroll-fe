@@ -91,11 +91,11 @@ const AssignmentForm = () => {
     try {
       setLoading(true);
       const response = await TeacherAssignmentAPI.getById(id);
-      const assignment = response.data;
+      const assignment = response.data?.data || response.data;
       
       setFormData({
-        teacherId: assignment.teacherId,
-        courseClassId: assignment.courseClassId,
+        teacherId: assignment.teacher.id,
+        courseClassId: assignment.courseClass.id,
       });
     } catch (err) {
       setError('Không thể tải thông tin phân công');
@@ -376,8 +376,9 @@ const AssignmentForm = () => {
         open={!!error}
         autoHideDuration={6000}
         onClose={() => setError('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={() => setError('')} severity="error">
+        <Alert onClose={() => setError('')} severity="error" variant="filled">
           {error}
         </Alert>
       </Snackbar>
@@ -386,8 +387,9 @@ const AssignmentForm = () => {
         open={!!success}
         autoHideDuration={6000}
         onClose={() => setSuccess('')}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={() => setSuccess('')} severity="success">
+        <Alert onClose={() => setSuccess('')} severity="success" variant="filled">
           {success}
         </Alert>
       </Snackbar>
