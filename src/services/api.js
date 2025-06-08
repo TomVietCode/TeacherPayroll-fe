@@ -99,6 +99,9 @@ export const StatisticsAPI = {
   byDepartment: () => api.get('/statistics/by-department'),
   byDegree: () => api.get('/statistics/by-degree'),
   byAge: () => api.get('/statistics/by-age'),
+  courseClasses: (academicYear) => api.get(`/statistics/course-classes/${academicYear}`),
+  exportCourseClasses: (academicYear) => api.get(`/statistics/course-classes/${academicYear}/export`, { responseType: 'blob' }),
+  getAcademicYears: () => api.get('/semesters/academic-years'),
 };
 
 export default api;

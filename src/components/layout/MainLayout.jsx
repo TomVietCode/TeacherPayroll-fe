@@ -86,6 +86,7 @@ function MainLayout({ children }) {
     { text: 'Kỳ học', icon: <CalendarTodayIcon />, path: '/semesters' },
     { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
     { text: 'Phân công giáo viên', icon: <AssignmentIcon />, path: '/teacher-assignments' },
+    { text: 'Thống kê lớp học phần', icon: <EqualizerIcon />, path: '/course-class-statistics' },
   ];
   
   const drawer = (

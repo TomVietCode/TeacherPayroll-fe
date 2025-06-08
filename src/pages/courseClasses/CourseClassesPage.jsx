@@ -30,13 +30,11 @@ import {
   Add as AddIcon, 
   Delete as DeleteIcon, 
   Save as SaveIcon, 
-  Refresh as RefreshIcon,
-  FileDownload as FileDownloadIcon 
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { SemesterAPI, CourseClassAPI } from '../../services/api';
 import CourseClassFormDialog from '../../components/courseClasses/CourseClassFormDialog';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
-import { exportCourseClassStatisticsToExcel } from '../../utils/excelExport';
 
 const CourseClassesPage = () => {
   const [semesters, setSemesters] = useState([]);
@@ -52,7 +50,6 @@ const CourseClassesPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({}); // Track student count changes
   const [isSavingChanges, setIsSavingChanges] = useState(false);
-  const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -237,44 +234,6 @@ const CourseClassesPage = () => {
     });
   };
 
-  // Handle Excel export
-  const handleExportExcel = async () => {
-    if (!selectedSemesterId || courseClassesBySubject.length === 0) {
-      setSnackbar({
-        open: true,
-        message: 'Vui lòng chọn kỳ học và có dữ liệu để xuất',
-        severity: 'warning'
-      });
-      return;
-    }
-
-    setIsExportingExcel(true);
-    try {
-      const selectedSemester = semesters.find(s => s.id === selectedSemesterId);
-      const academicYear = selectedSemester ? selectedSemester.academicYear : 'Unknown';
-      
-      const success = exportCourseClassStatisticsToExcel(courseClassesBySubject, academicYear, selectedSemester);
-      if (success) {
-        setSnackbar({
-          open: true,
-          message: 'Xuất Excel thành công! File đã được tải về.',
-          severity: 'success'
-        });
-      } else {
-        throw new Error('Export failed');
-      }
-    } catch (error) {
-      console.error('Error exporting Excel:', error);
-      setSnackbar({
-        open: true,
-        message: 'Lỗi khi xuất Excel. Vui lòng thử lại.',
-        severity: 'error'
-      });
-    } finally {
-      setIsExportingExcel(false);
-    }
-  };
-
   const handleDeleteCourseClass = (courseClass) => {
     setSelectedCourseClass(courseClass);
     setConfirmOpen(true);
@@ -429,18 +388,6 @@ const CourseClassesPage = () => {
               <Typography variant="h6">
                 Danh sách học phần
               </Typography>
-              
-              <Tooltip title="Xuất dữ liệu Excel">
-                <Button
-                  variant="outlined"
-                  startIcon={isExportingExcel ? <CircularProgress size={16} /> : <FileDownloadIcon />}
-                  onClick={handleExportExcel}
-                  disabled={isExportingExcel || loading}
-                  size="small"
-                >
-                  {isExportingExcel ? 'Đang xuất...' : 'Xuất Excel'}
-                </Button>
-              </Tooltip>
             </Box>
             
             <Grid container spacing={2}>

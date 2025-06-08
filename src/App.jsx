@@ -11,6 +11,7 @@ import SubjectsPage from './pages/subjects/SubjectsPage';
 import SemestersPage from './pages/semesters/SemestersPage';
 import CourseClassesPage from './pages/courseClasses/CourseClassesPage';
 import StatisticsPage from './pages/statistics/StatisticsPage';
+import CourseClassStatistics from './pages/courseClasses/CourseClassStatistics';
 
 // Teacher Assignment Pages
 import TeacherAssignmentList from './pages/teacherAssignments/TeacherAssignmentList';
@@ -87,6 +88,15 @@ const router = createBrowserRouter([
     element: (
       <MainLayout>
         <StatisticsPage />
+      </MainLayout>
+    ),
+  },
+  // Course Class Statistics Route
+  {
+    path: '/course-class-statistics',
+    element: (
+      <MainLayout>
+        <CourseClassStatistics />
       </MainLayout>
     ),
   },

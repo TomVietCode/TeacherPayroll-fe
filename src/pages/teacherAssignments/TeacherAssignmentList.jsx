@@ -36,9 +36,7 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  Edit as EditIcon,
   Delete as DeleteIcon,
-  Add as AddIcon,
   FilterList as FilterIcon,
   Clear as ClearIcon,
   Assignment as AssignmentIcon,
@@ -373,14 +371,6 @@ const TeacherAssignmentList = () => {
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Tooltip title="Chỉnh sửa phân công">
-                          <IconButton
-                            size="small"
-                            onClick={() => navigate(`/teacher-assignments/edit/${assignment.id}`)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
                         <Tooltip title="Xóa phân công">
                           <IconButton
                             size="small"
@@ -433,13 +423,6 @@ const TeacherAssignmentList = () => {
             disabled={loading}
           >
             Làm mới
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/teacher-assignments/new')}
-          >
-            Tạo phân công mới
           </Button>
         </Box>
       </Box>
