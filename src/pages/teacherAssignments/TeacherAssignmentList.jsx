@@ -437,7 +437,7 @@ const TeacherAssignmentList = () => {
           />
           <Tab 
             icon={<AssignmentIcon />} 
-            label="Phân công hàng loạt" 
+            label="Phân công giáo viên" 
             iconPosition="start"
           />
         </Tabs>

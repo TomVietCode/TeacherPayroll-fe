@@ -23,14 +23,12 @@ import {
   TextField, 
   Fab,
   Chip,
-  CircularProgress,
-  Tooltip
+  CircularProgress
 } from '@mui/material';
 import { 
   Add as AddIcon, 
   Delete as DeleteIcon, 
-  Save as SaveIcon, 
-  Refresh as RefreshIcon
+  Save as SaveIcon
 } from '@mui/icons-material';
 import { SemesterAPI, CourseClassAPI } from '../../services/api';
 import CourseClassFormDialog from '../../components/courseClasses/CourseClassFormDialog';
@@ -177,6 +175,20 @@ const CourseClassesPage = () => {
   const handleStudentCountChange = (classId, newValue) => {
     const numValue = parseInt(newValue) || 0;
     if (numValue < 0) return; // Don't allow negative numbers
+    
+    // Find the course class to get maxStudents
+    const courseClass = courseClassesBySubject
+      .flatMap(subject => subject.classes)
+      .find(c => c.id === classId);
+    
+    if (courseClass && numValue > courseClass.maxStudents) {
+      setSnackbar({
+        open: true,
+        message: `Số sinh viên thực tế (${numValue}) không được lớn hơn số sinh viên tối đa (${courseClass.maxStudents})`,
+        severity: 'error'
+      });
+      return; // Don't update the value
+    }
     
     setPendingChanges(prev => ({
       ...prev,
@@ -484,22 +496,28 @@ const CourseClassesPage = () => {
                         <TableCell>{courseClass.code}</TableCell>
                         <TableCell>{courseClass.name}</TableCell>
                         <TableCell>
-                          <TextField
-                            size="small"
-                            type="number"
-                            value={getCurrentStudentCount(courseClass)}
-                            onChange={(e) => handleStudentCountChange(courseClass.id, e.target.value)}
-                            inputProps={{ 
-                              min: 0,
-                              style: { width: '80px' }
-                            }}
-                            variant={hasPendingChange(courseClass.id) ? "outlined" : "standard"}
-                            sx={{
-                              '& .MuiInputBase-root': {
-                                bgcolor: hasPendingChange(courseClass.id) ? 'warning.light' : 'inherit',
-                              }
-                            }}
-                          />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TextField
+                              size="small"
+                              type="number"
+                              value={getCurrentStudentCount(courseClass)}
+                              onChange={(e) => handleStudentCountChange(courseClass.id, e.target.value)}
+                              inputProps={{ 
+                                min: 0,
+                                max: courseClass.maxStudents || 1000,
+                                style: { width: '60px' }
+                              }}
+                              variant={hasPendingChange(courseClass.id) ? "outlined" : "standard"}
+                              sx={{
+                                '& .MuiInputBase-root': {
+                                  bgcolor: hasPendingChange(courseClass.id) ? 'warning.light' : 'inherit',
+                                }
+                              }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              / {courseClass.maxStudents || 40}
+                            </Typography>
+                          </Box>
                         </TableCell>
                         <TableCell>
                           {courseClass.teacher ? (
@@ -585,4 +603,4 @@ const CourseClassesPage = () => {
   );
 };
 
-export default CourseClassesPage; 
+export default CourseClassesPage;   

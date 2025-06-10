@@ -22,6 +22,11 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // Helper function to get section name from path
@@ -34,6 +39,10 @@ const getSectionName = (path) => {
   if (path.includes('semesters')) return 'Kỳ học';
   if (path.includes('course-classes')) return 'Lớp học phần';
   if (path.includes('teacher-assignments')) return 'Phân công giáo viên';
+  if (path.includes('hourly-rates')) return 'Định mức tiền theo tiết';
+  if (path.includes('teacher-coefficients')) return 'Hệ số giáo viên';
+  if (path.includes('class-coefficients')) return 'Hệ số lớp';
+  if (path.includes('payroll-calculation')) return 'Tính tiền dạy';
   return '';
 };
 
@@ -47,6 +56,7 @@ function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Default open on desktop, closed on mobile
   const [teacherMenuOpen, setTeacherMenuOpen] = useState(true);
   const [classMenuOpen, setClassMenuOpen] = useState(true);
+  const [payrollMenuOpen, setPayrollMenuOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -72,6 +82,15 @@ function MainLayout({ children }) {
     }
   };
 
+  const handlePayrollMenuToggle = () => {
+    if (sidebarOpen) {
+      setPayrollMenuOpen(!payrollMenuOpen);
+    } else {
+      setSidebarOpen(true);
+      setPayrollMenuOpen(true);
+    }
+  };
+
   // Submenu items for teacher management
   const teacherSubMenuItems = [
     { text: 'Thống kê', icon: <EqualizerIcon />, path: '/' },
@@ -87,6 +106,14 @@ function MainLayout({ children }) {
     { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
     { text: 'Phân công giáo viên', icon: <AssignmentIcon />, path: '/teacher-assignments' },
     { text: 'Thống kê lớp học phần', icon: <EqualizerIcon />, path: '/course-class-statistics' },
+  ];
+
+  // Submenu items for payroll management
+  const payrollSubMenuItems = [
+    { text: 'Định mức tiền theo tiết', icon: <AttachMoneyIcon />, path: '/hourly-rates' },
+    { text: 'Hệ số giáo viên', icon: <TrendingUpIcon />, path: '/teacher-coefficients' },
+    { text: 'Hệ số lớp', icon: <SettingsIcon />, path: '/class-coefficients' },
+    { text: 'Tính tiền dạy', icon: <CalculateIcon />, path: '/payroll-calculation' },
   ];
   
   const drawer = (
@@ -195,6 +222,66 @@ function MainLayout({ children }) {
         <Collapse in={sidebarOpen && classMenuOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {classSubMenuItems.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton 
+                  selected={location.pathname === item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (isMobile) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  sx={{ 
+                    pl: 4,
+                    minHeight: 40,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Collapse>
+
+        {/* Payroll Management Dropdown */}
+        <ListItem disablePadding>
+          <ListItemButton 
+            onClick={handlePayrollMenuToggle}
+            sx={{ 
+              justifyContent: sidebarOpen ? 'initial' : 'center',
+              px: sidebarOpen ? 2.5 : 'auto',
+              minHeight: 48,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: sidebarOpen ? 2 : 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <AccountBalanceWalletIcon />
+            </ListItemIcon>
+            {sidebarOpen && (
+              <>
+                <ListItemText primary="Tính tiền dạy" />
+                {payrollMenuOpen ? <ExpandLess /> : <ExpandMore />}
+              </>
+            )}
+          </ListItemButton>
+        </ListItem>
+        
+        {/* Payroll Submenu items */}
+        <Collapse in={sidebarOpen && payrollMenuOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {payrollSubMenuItems.map((item) => (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton 
                   selected={location.pathname === item.path}

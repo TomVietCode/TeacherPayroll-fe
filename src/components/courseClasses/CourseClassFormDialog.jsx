@@ -28,7 +28,8 @@ const CourseClassFormDialog = ({
   const [formData, setFormData] = useState({
     semesterId: '',
     subjectId: '',
-    numberOfClasses: 1
+    numberOfClasses: 1,
+    maxStudents: ''
   });
   const [errors, setErrors] = useState({});
   const [semesters, setSemesters] = useState([]);
@@ -115,7 +116,8 @@ const CourseClassFormDialog = ({
       setFormData({
         semesterId: initialSemesterId,
         subjectId: '',
-        numberOfClasses: 1
+        numberOfClasses: 1,
+        maxStudents: ''
       });
       setSelectedAcademicYear(initialAcademicYear);
       setErrors({});
@@ -124,9 +126,17 @@ const CourseClassFormDialog = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let processedValue = value;
+    
+    if (name === 'numberOfClasses') {
+      processedValue = parseInt(value) || 1;
+    } else if (name === 'maxStudents') {
+      processedValue = value === '' ? '' : (parseInt(value) || '');
+    }
+    
     setFormData(prev => ({ 
       ...prev, 
-      [name]: name === 'numberOfClasses' ? parseInt(value) || 1 : value 
+      [name]: processedValue
     }));
     
     // Clear error for this field when user updates it
@@ -148,6 +158,10 @@ const CourseClassFormDialog = ({
     
     if (!formData.numberOfClasses || formData.numberOfClasses < 1 || formData.numberOfClasses > 10) {
       newErrors.numberOfClasses = 'Số lớp phải từ 1 đến 10';
+    }
+    
+    if (!formData.maxStudents || typeof formData.maxStudents === 'string' && formData.maxStudents === '' || formData.maxStudents < 1 || formData.maxStudents > 1000) {
+      newErrors.maxStudents = 'Số sinh viên tối đa phải từ 1 đến 1000';
     }
     
     setErrors(newErrors);
@@ -286,6 +300,28 @@ const CourseClassFormDialog = ({
                   variant="outlined"
                   size="medium"
                   inputProps={{ min: 1, max: 10 }}
+                  disabled={loading}
+                  sx={{ 
+                    '& .MuiInputBase-root': { minHeight: 56 },
+                    minWidth: '100%'
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6} sx={{ width: { xs: '100%', md: '50%' } }}>
+                <TextField
+                  name="maxStudents"
+                  label="Số sinh viên tối đa"
+                  type="number"
+                  value={formData.maxStudents}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  error={!!errors.maxStudents}
+                  helperText={errors.maxStudents || 'Tối đa 1000 sinh viên'}
+                  variant="outlined"
+                  size="medium"
+                  inputProps={{ min: 1, max: 1000 }}
                   disabled={loading}
                   sx={{ 
                     '& .MuiInputBase-root': { minHeight: 56 },

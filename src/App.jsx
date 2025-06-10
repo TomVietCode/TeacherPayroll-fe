@@ -17,6 +17,12 @@ import CourseClassStatistics from './pages/courseClasses/CourseClassStatistics';
 import TeacherAssignmentList from './pages/teacherAssignments/TeacherAssignmentList';
 import AssignmentForm from './pages/teacherAssignments/AssignmentForm';
 
+// Payroll Pages - UC3
+import HourlyRatesPage from './pages/hourlyRates/HourlyRatesPage';
+import TeacherCoefficientsPage from './pages/teacherCoefficients/TeacherCoefficientsPage';
+import ClassCoefficientsPage from './pages/classCoefficients/ClassCoefficientsPage';
+import PayrollCalculationPage from './pages/payrollCalculation/PayrollCalculationPage';
+
 // Import CSS
 import './App.css';
 
@@ -122,6 +128,39 @@ const router = createBrowserRouter([
     element: (
       <MainLayout>
         <AssignmentForm />
+      </MainLayout>
+    ),
+  },
+  // Payroll Management Routes - UC3
+  {
+    path: '/hourly-rates',
+    element: (
+      <MainLayout>
+        <HourlyRatesPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/teacher-coefficients',
+    element: (
+      <MainLayout>
+        <TeacherCoefficientsPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/class-coefficients',
+    element: (
+      <MainLayout>
+        <ClassCoefficientsPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/payroll-calculation',
+    element: (
+      <MainLayout>
+        <PayrollCalculationPage />
       </MainLayout>
     ),
   },

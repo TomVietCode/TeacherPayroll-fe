@@ -104,4 +104,42 @@ export const StatisticsAPI = {
   getAcademicYears: () => api.get('/semesters/academic-years'),
 };
 
+// Hourly Rate API endpoints - UC3.1
+export const HourlyRateAPI = {
+  getAll: () => api.get('/hourly-rates'),
+  getById: (id) => api.get(`/hourly-rates/${id}`),
+  getByAcademicYear: (academicYear) => api.get(`/hourly-rates/academic-year/${academicYear}`),
+  create: (data) => api.post('/hourly-rates', data),
+  update: (id, data) => api.patch(`/hourly-rates/${id}`, data),
+  delete: (id) => api.delete(`/hourly-rates/${id}`),
+};
+
+// Teacher Coefficient API endpoints - UC3.2
+export const TeacherCoefficientAPI = {
+  getAll: (params) => api.get('/teacher-coefficients', { params }),
+  getByAcademicYear: (academicYear) => api.get(`/teacher-coefficients/academic-year/${academicYear}`),
+  create: (data) => api.post('/teacher-coefficients', data),
+  batchUpdate: (data) => api.patch('/teacher-coefficients/batch', data),
+  update: (id, data) => api.patch(`/teacher-coefficients/${id}`, data),
+  delete: (id) => api.delete(`/teacher-coefficients/${id}`),
+};
+
+// Class Coefficient API endpoints - UC3.3
+export const ClassCoefficientAPI = {
+  getAll: () => api.get('/class-coefficients'),
+  getById: (id) => api.get(`/class-coefficients/${id}`),
+  getByAcademicYear: (academicYear) => api.get(`/class-coefficients/academic-year/${academicYear}`),
+  getValidStudentRanges: () => api.get('/class-coefficients/ranges'),
+  create: (data) => api.post('/class-coefficients', data),
+  update: (id, data) => api.patch(`/class-coefficients/${id}`, data),
+  updateByAcademicYear: (academicYear, data) => api.patch(`/class-coefficients/academic-year/${academicYear}`, data),
+  delete: (id) => api.delete(`/class-coefficients/${id}`),
+};
+
+// Payroll API endpoints - UC3.4
+export const PayrollAPI = {
+  calculate: (data) => api.post('/payroll/calculate', data),
+  getValidAcademicYears: () => api.get('/payroll/academic-years'),
+};
+
 export default api;

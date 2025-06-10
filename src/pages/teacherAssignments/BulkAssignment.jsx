@@ -226,7 +226,7 @@ const BulkAssignment = ({ onSuccess }) => {
         }, 2000);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Không thể thực hiện phân công hàng loạt');
+      setError(err.response?.data?.message || 'Không thể thực hiện phân công');
       console.error('Error executing bulk assignment:', err);
     } finally {
       setLoading(false);
@@ -252,7 +252,7 @@ const BulkAssignment = ({ onSuccess }) => {
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" component="h2" gutterBottom>
           <AssignmentIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Phân công hàng loạt
+          Phân công giáo viên
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Phân công một giáo viên cho nhiều lớp được chọn
@@ -341,7 +341,7 @@ const BulkAssignment = ({ onSuccess }) => {
                 startIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
                 sx={{ mt: 2 }}
               >
-                Thực hiện phân công hàng loạt
+                Thực hiện phân công
               </Button>
             </CardContent>
           </Card>
@@ -506,7 +506,7 @@ const BulkAssignment = ({ onSuccess }) => {
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialog} onClose={() => setConfirmDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Xác nhận phân công hàng loạt</DialogTitle>
+        <DialogTitle>Xác nhận phân công</DialogTitle>
         <DialogContent>
           <Typography gutterBottom>
             Bạn sắp phân công <strong>{getSelectedTeacherInfo()?.fullName}</strong> cho{' '}
