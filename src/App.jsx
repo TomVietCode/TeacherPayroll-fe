@@ -23,6 +23,11 @@ import TeacherCoefficientsPage from './pages/teacherCoefficients/TeacherCoeffici
 import ClassCoefficientsPage from './pages/classCoefficients/ClassCoefficientsPage';
 import PayrollCalculationPage from './pages/payrollCalculation/PayrollCalculationPage';
 
+// Report Pages - UC4
+import TeacherYearlyReportPage from './pages/reports/TeacherYearlyReportPage';
+import DepartmentReportPage from './pages/reports/DepartmentReportPage';
+import SchoolReportPage from './pages/reports/SchoolReportPage';
+
 // Import CSS
 import './App.css';
 
@@ -161,6 +166,31 @@ const router = createBrowserRouter([
     element: (
       <MainLayout>
         <PayrollCalculationPage />
+      </MainLayout>
+    ),
+  },
+  // Report Routes - UC4
+  {
+    path: '/reports/teacher-yearly',
+    element: (
+      <MainLayout>
+        <TeacherYearlyReportPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/reports/department',
+    element: (
+      <MainLayout>
+        <DepartmentReportPage />
+      </MainLayout>
+    ),
+  },
+  {
+    path: '/reports/school',
+    element: (
+      <MainLayout>
+        <SchoolReportPage />
       </MainLayout>
     ),
   },

@@ -27,6 +27,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // Helper function to get section name from path
@@ -43,6 +44,9 @@ const getSectionName = (path) => {
   if (path.includes('teacher-coefficients')) return 'Hệ số giáo viên';
   if (path.includes('class-coefficients')) return 'Hệ số lớp';
   if (path.includes('payroll-calculation')) return 'Tính tiền dạy';
+  if (path.includes('reports/teacher-yearly')) return 'Báo cáo giáo viên theo năm';
+  if (path.includes('reports/department')) return 'Báo cáo theo khoa';
+  if (path.includes('reports/school')) return 'Báo cáo toàn trường';
   return '';
 };
 
@@ -55,8 +59,9 @@ function MainLayout({ children }) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Default open on desktop, closed on mobile
   const [teacherMenuOpen, setTeacherMenuOpen] = useState(true);
-  const [classMenuOpen, setClassMenuOpen] = useState(true);
-  const [payrollMenuOpen, setPayrollMenuOpen] = useState(true);
+  const [classMenuOpen, setClassMenuOpen] = useState(false);
+  const [payrollMenuOpen, setPayrollMenuOpen] = useState(false);
+  const [reportMenuOpen, setReportMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -66,28 +71,81 @@ function MainLayout({ children }) {
 
   const handleTeacherMenuToggle = () => {
     if (sidebarOpen) {
-      setTeacherMenuOpen(!teacherMenuOpen);
+      if (teacherMenuOpen) {
+        setTeacherMenuOpen(false);
+      } else {
+        // Đóng tất cả menu khác và mở menu teacher
+        setClassMenuOpen(false);
+        setPayrollMenuOpen(false);
+        setReportMenuOpen(false);
+        setTeacherMenuOpen(true);
+      }
     } else {
       setSidebarOpen(true);
+      setClassMenuOpen(false);
+      setPayrollMenuOpen(false);
+      setReportMenuOpen(false);
       setTeacherMenuOpen(true);
     }
   };
 
   const handleClassMenuToggle = () => {
     if (sidebarOpen) {
-      setClassMenuOpen(!classMenuOpen);
+      if (classMenuOpen) {
+        setClassMenuOpen(false);
+      } else {
+        // Đóng tất cả menu khác và mở menu class
+        setTeacherMenuOpen(false);
+        setPayrollMenuOpen(false);
+        setReportMenuOpen(false);
+        setClassMenuOpen(true);
+      }
     } else {
       setSidebarOpen(true);
+      setTeacherMenuOpen(false);
+      setPayrollMenuOpen(false);
+      setReportMenuOpen(false);
       setClassMenuOpen(true);
     }
   };
 
   const handlePayrollMenuToggle = () => {
     if (sidebarOpen) {
-      setPayrollMenuOpen(!payrollMenuOpen);
+      if (payrollMenuOpen) {
+        setPayrollMenuOpen(false);
+      } else {
+        // Đóng tất cả menu khác và mở menu payroll
+        setTeacherMenuOpen(false);
+        setClassMenuOpen(false);
+        setReportMenuOpen(false);
+        setPayrollMenuOpen(true);
+      }
     } else {
       setSidebarOpen(true);
+      setTeacherMenuOpen(false);
+      setClassMenuOpen(false);
+      setReportMenuOpen(false);
       setPayrollMenuOpen(true);
+    }
+  };
+
+  const handleReportMenuToggle = () => {
+    if (sidebarOpen) {
+      if (reportMenuOpen) {
+        setReportMenuOpen(false);
+      } else {
+        // Đóng tất cả menu khác và mở menu report
+        setTeacherMenuOpen(false);
+        setClassMenuOpen(false);
+        setPayrollMenuOpen(false);
+        setReportMenuOpen(true);
+      }
+    } else {
+      setSidebarOpen(true);
+      setTeacherMenuOpen(false);
+      setClassMenuOpen(false);
+      setPayrollMenuOpen(false);
+      setReportMenuOpen(true);
     }
   };
 
@@ -114,6 +172,13 @@ function MainLayout({ children }) {
     { text: 'Hệ số giáo viên', icon: <TrendingUpIcon />, path: '/teacher-coefficients' },
     { text: 'Hệ số lớp', icon: <SettingsIcon />, path: '/class-coefficients' },
     { text: 'Tính tiền dạy', icon: <CalculateIcon />, path: '/payroll-calculation' },
+  ];
+
+  // Submenu items for report management - UC4
+  const reportSubMenuItems = [
+    { text: 'Báo cáo giáo viên theo năm', icon: <PersonIcon />, path: '/reports/teacher-yearly' },
+    { text: 'Báo cáo theo khoa', icon: <DomainIcon />, path: '/reports/department' },
+    { text: 'Báo cáo toàn trường', icon: <SchoolIcon />, path: '/reports/school' },
   ];
   
   const drawer = (
@@ -282,6 +347,66 @@ function MainLayout({ children }) {
         <Collapse in={sidebarOpen && payrollMenuOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {payrollSubMenuItems.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <ListItemButton 
+                  selected={location.pathname === item.path}
+                  onClick={() => {
+                    navigate(item.path);
+                    if (isMobile) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  sx={{ 
+                    pl: 4,
+                    minHeight: 40,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                    }}
+                  >
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Collapse>
+
+        {/* Report Management Dropdown - UC4 */}
+        <ListItem disablePadding>
+          <ListItemButton 
+            onClick={handleReportMenuToggle}
+            sx={{ 
+              justifyContent: sidebarOpen ? 'initial' : 'center',
+              px: sidebarOpen ? 2.5 : 'auto',
+              minHeight: 48,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: sidebarOpen ? 2 : 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <AssessmentIcon />
+            </ListItemIcon>
+            {sidebarOpen && (
+              <>
+                <ListItemText primary="Báo cáo tiền dạy" />
+                {reportMenuOpen ? <ExpandLess /> : <ExpandMore />}
+              </>
+            )}
+          </ListItemButton>
+        </ListItem>
+        
+        {/* Report Submenu items */}
+        <Collapse in={sidebarOpen && reportMenuOpen} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {reportSubMenuItems.map((item) => (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton 
                   selected={location.pathname === item.path}

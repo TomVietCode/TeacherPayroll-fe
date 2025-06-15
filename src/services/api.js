@@ -142,4 +142,23 @@ export const PayrollAPI = {
   getValidAcademicYears: () => api.get('/payroll/academic-years'),
 };
 
+// Report API endpoints - UC4
+export const ReportAPI = {
+  // UC4.1: Báo cáo tiền dạy của giáo viên trong một năm
+  getTeacherYearlyReport: (teacherId, academicYear) => 
+    api.get(`/reports/teacher/${teacherId}/academic-year/${academicYear}`),
+  
+  // UC4.2: Báo cáo tiền dạy của giáo viên một khoa
+  getDepartmentReport: (departmentId, academicYear, semesterId = null) => 
+    api.get(`/reports/department/${departmentId}/academic-year/${academicYear}`, {
+      params: semesterId ? { semesterId } : {}
+    }),
+  
+  // UC4.3: Báo cáo tiền dạy của giáo viên toàn trường
+  getSchoolReport: (academicYear, semesterId = null) => 
+    api.get(`/reports/school/academic-year/${academicYear}`, {
+      params: semesterId ? { semesterId } : {}
+    }),
+};
+
 export default api;
