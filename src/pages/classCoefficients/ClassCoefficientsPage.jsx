@@ -273,7 +273,6 @@ function ClassCoefficientsPage() {
                     <TableRow>
                       <TableCell align="center"><strong>Khoảng số sinh viên</strong></TableCell>
                       <TableCell align="center"><strong>Hệ số lớp</strong></TableCell>
-                      <TableCell align="center"><strong>Loại</strong></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -305,17 +304,6 @@ function ClassCoefficientsPage() {
                             >
                               {coefficient >= 0 ? '+' : ''}{coefficient.toFixed(1)}
                             </Typography>
-                          </TableCell>
-                          <TableCell align="center">
-                            {isStandard ? (
-                              <Chip label="Chuẩn" color="primary" size="small" />
-                            ) : isPositive ? (
-                              <Chip label="Thưởng" color="success" size="small" />
-                            ) : isNegative ? (
-                              <Chip label="Phạt" color="error" size="small" />
-                            ) : (
-                              <Chip label="Trung tính" color="default" size="small" />
-                            )}
                           </TableCell>
                         </TableRow>
                       );

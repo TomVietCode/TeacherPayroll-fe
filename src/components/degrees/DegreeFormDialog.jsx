@@ -21,8 +21,7 @@ const DegreeFormDialog = ({
   const isEditMode = !!initialData;
   const [formData, setFormData] = useState({
     fullName: '',
-    shortName: '',
-    coefficient: ''
+    shortName: ''
   });
   const [errors, setErrors] = useState({});
 
@@ -30,15 +29,13 @@ const DegreeFormDialog = ({
     if (initialData) {
       setFormData({
         fullName: initialData.fullName || '',
-        shortName: initialData.shortName || '',
-        coefficient: initialData.coefficient || 1.0
+        shortName: initialData.shortName || ''
       });
     } else {
       // Reset form for new degree
       setFormData({
         fullName: '',
-        shortName: '',
-        coefficient: 1.0
+        shortName: ''
       });
     }
     setErrors({});
@@ -48,7 +45,7 @@ const DegreeFormDialog = ({
     const { name, value } = e.target;
     setFormData(prev => ({ 
       ...prev, 
-      [name]: name === 'coefficient' ? parseFloat(value) || '' : value 
+      [name]: value 
     }));
     
     // Clear error for this field when user updates it
@@ -68,12 +65,6 @@ const DegreeFormDialog = ({
       newErrors.shortName = 'Vui lòng nhập tên viết tắt';
     } else if (formData.shortName.length > 5) {
       newErrors.shortName = 'Tên viết tắt không được vượt quá 5 ký tự';
-    }
-
-    if (!formData.coefficient || formData.coefficient <= 0) {
-      newErrors.coefficient = 'Vui lòng nhập hệ số hợp lệ';
-    } else if (formData.coefficient < 0.1 || formData.coefficient > 10.0) {
-      newErrors.coefficient = 'Hệ số phải từ 0.1 đến 10.0';
     }
     
     setErrors(newErrors);

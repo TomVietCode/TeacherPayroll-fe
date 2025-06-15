@@ -38,14 +38,8 @@ const DegreesPage = () => {
   }, []);
 
   const columns = [
-    { id: 'shortName', label: 'Tên viết tắt', width: '15%' },
-    { id: 'fullName', label: 'Tên bằng cấp', width: '50%' },
-    { 
-      id: 'coefficient', 
-      label: 'Hệ số', 
-      width: '15%',
-      render: (row) => row.coefficient ? row.coefficient.toFixed(1) : '1.0'
-    },
+    { id: 'shortName', label: 'Tên viết tắt', width: '20%' },
+    { id: 'fullName', label: 'Tên bằng cấp', width: '60%' },
     { 
       id: 'createdAt', 
       label: 'Ngày tạo', 

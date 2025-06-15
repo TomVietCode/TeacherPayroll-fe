@@ -84,13 +84,23 @@ function TeacherCoefficientsPage() {
   };
 
   const handleCoefficientChange = (degreeId, newValue) => {
-    const numValue = parseFloat(newValue);
-    if (isNaN(numValue) || numValue <= 0) return;
+    // Allow empty string for temporary input
+    if (newValue === '') {
+      setPendingChanges(prev => ({
+        ...prev,
+        [degreeId]: ''
+      }));
+      return;
+    }
     
-    setPendingChanges(prev => ({
-      ...prev,
-      [degreeId]: numValue
-    }));
+    const numValue = parseFloat(newValue);
+    // Allow any numeric input, validation will happen on save
+    if (!isNaN(numValue)) {
+      setPendingChanges(prev => ({
+        ...prev,
+        [degreeId]: numValue
+      }));
+    }
   };
 
   const handleSaveChanges = async () => {
@@ -103,16 +113,36 @@ function TeacherCoefficientsPage() {
       return;
     }
 
+    // Validate all pending changes
+    const invalidChanges = [];
+    const validCoefficients = [];
+    
+    Object.entries(pendingChanges).forEach(([degreeId, coefficient]) => {
+      const numValue = parseFloat(coefficient);
+      if (isNaN(numValue) || numValue <= 0 || numValue > 5.0) {
+        // Find degree name for error message
+        const coefficientData = coefficients.find(c => c.degree.id === degreeId);
+        const degreeName = coefficientData?.degree?.fullName || 'Unknown';
+        invalidChanges.push(`${degreeName}: ${coefficient}`);
+      } else {
+        validCoefficients.push({ degreeId, coefficient: numValue });
+      }
+    });
+
+    if (invalidChanges.length > 0) {
+      setSnackbar({
+        open: true,
+        message: `Hệ số không hợp lệ (phải từ 0.1 đến 5.0): ${invalidChanges.join(', ')}`,
+        severity: 'error'
+      });
+      return;
+    }
+
     setSaving(true);
     try {
-      const coefficientsToUpdate = Object.entries(pendingChanges).map(([degreeId, coefficient]) => ({
-        degreeId,
-        coefficient
-      }));
-
       await TeacherCoefficientAPI.batchUpdate({
         academicYear: selectedAcademicYear,
-        coefficients: coefficientsToUpdate
+        coefficients: validCoefficients
       });
 
       setSnackbar({
@@ -136,11 +166,12 @@ function TeacherCoefficientsPage() {
     }
   };
 
-  const getCurrentValue = (degree) => {
-    if (pendingChanges[degree.id] !== undefined) {
-      return pendingChanges[degree.id];
+  const getCurrentValue = (coefficient) => {
+    const degreeId = coefficient.degree.id;
+    if (pendingChanges[degreeId] !== undefined) {
+      return pendingChanges[degreeId];
     }
-    return degree.coefficient;
+    return coefficient.coefficient;
   };
 
   const hasChanges = Object.keys(pendingChanges).length > 0;
