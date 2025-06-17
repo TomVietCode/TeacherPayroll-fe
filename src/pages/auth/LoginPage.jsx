@@ -105,9 +105,6 @@ const LoginPage = () => {
     
     if (!result.success) {
       setLoginError(result.error);
-    } else {
-      // Login successful - navigate to profile page
-      window.location.href = '/profile';
     }
   };
 

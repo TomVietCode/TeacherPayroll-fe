@@ -14,9 +14,10 @@ import {
   Select,
   MenuItem,
   FormHelperText,
-  Typography
+  Typography,
+  Autocomplete
 } from '@mui/material';
-import { SemesterAPI, SubjectAPI } from '../../services/api';
+import { SemesterAPI, SubjectAPI, DepartmentAPI } from '../../services/api';
 
 const CourseClassFormDialog = ({ 
   open, 
@@ -34,6 +35,9 @@ const CourseClassFormDialog = ({
   const [errors, setErrors] = useState({});
   const [semesters, setSemesters] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [filteredSubjects, setFilteredSubjects] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Helper function to find the semester closest to current date
@@ -78,13 +82,19 @@ const CourseClassFormDialog = ({
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [semestersResponse, subjectsResponse] = await Promise.all([
+        const [semestersResponse, subjectsResponse, departmentsResponse] = await Promise.all([
           SemesterAPI.getAll(),
           SubjectAPI.getAll(),
+          DepartmentAPI.getAll(),
         ]);
         const semestersList = semestersResponse.data.data || [];
+        const subjectsList = subjectsResponse.data.data || [];
+        const departmentsList = departmentsResponse.data.data || [];
+        
         setSemesters(semestersList);
-        setSubjects(subjectsResponse.data.data || []);
+        setSubjects(subjectsList);
+        setDepartments(departmentsList);
+        setFilteredSubjects(subjectsList); // Initialize filtered subjects
         
         // Auto-select closest semester if no latestSemester prop provided
         if (!latestSemester) {
@@ -106,6 +116,18 @@ const CourseClassFormDialog = ({
     }
   }, [open, latestSemester]);
 
+  // Filter subjects when department changes
+  useEffect(() => {
+    if (selectedDepartment) {
+      const filtered = subjects.filter(subject => subject.department?.id === selectedDepartment);
+      setFilteredSubjects(filtered);
+    } else {
+      setFilteredSubjects(subjects);
+    }
+    // Reset selected subject when department changes
+    setFormData(prev => ({ ...prev, subjectId: '' }));
+  }, [selectedDepartment, subjects]);
+
   useEffect(() => {
     if (open) {
       // Use provided latestSemester or find closest one
@@ -120,6 +142,7 @@ const CourseClassFormDialog = ({
         maxStudents: ''
       });
       setSelectedAcademicYear(initialAcademicYear);
+      setSelectedDepartment('');
       setErrors({});
     }
   }, [open, latestSemester, semesters]);
@@ -150,6 +173,10 @@ const CourseClassFormDialog = ({
     
     if (!formData.semesterId) {
       newErrors.semesterId = 'Vui lòng chọn kỳ học';
+    }
+    
+    if (!selectedDepartment) {
+      newErrors.departmentId = 'Vui lòng chọn khoa';
     }
     
     if (!formData.subjectId) {
@@ -195,7 +222,7 @@ const CourseClassFormDialog = ({
     <Dialog 
       open={open} 
       onClose={onClose} 
-      maxWidth="lg" 
+      maxWidth="md" 
       fullWidth
       PaperProps={{
         sx: { borderRadius: 2 }
@@ -213,7 +240,7 @@ const CourseClassFormDialog = ({
         ) : (
           <Box sx={{ width: '100%'}}>
             <Grid container spacing={4} sx={{ width: '100%' }}>
-              <Grid item xs={12} md={6} sx={{ width: { xs: '100%', md: '50%' } }}>
+              <Grid item xs={12} md={6} width={'30%'}>
                 <FormControl fullWidth required error={!!errors.academicYear} size="medium" sx={{ minWidth: '100%' }}>
                   <InputLabel>Năm học</InputLabel>
                   <Select
@@ -232,7 +259,7 @@ const CourseClassFormDialog = ({
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12} md={6} sx={{ width: { xs: '100%', md: '50%' } }}>
+              <Grid item xs={12} md={6} width={'30%'}>
                 <FormControl fullWidth required error={!!errors.semesterId} size="medium" sx={{ minWidth: '100%' }}>
                   <InputLabel>Kỳ học</InputLabel>
                   <Select
@@ -253,40 +280,94 @@ const CourseClassFormDialog = ({
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12} sx={{ width: '100%' }}>
-                <FormControl fullWidth required error={!!errors.subjectId} size="medium" sx={{ minWidth: '100%' }}>
-                  <InputLabel>Học phần</InputLabel>
+              <Grid item xs={12} md={6} width={'45%'}>
+                <FormControl fullWidth required error={!!errors.departmentId} size="medium" sx={{ minWidth: '100%' }}>
+                  <InputLabel>Khoa</InputLabel>
                   <Select
-                    name="subjectId"
-                    value={formData.subjectId}
-                    onChange={handleChange}
-                    label="Học phần"
-                    sx={{ minHeight: 56 }}
-                    disabled={loading}
-                    MenuProps={{
-                      PaperProps: {
-                        style: {
-                          maxHeight: 400
-                        }
+                    value={selectedDepartment}
+                    onChange={(e) => {
+                      setSelectedDepartment(e.target.value);
+                      if (errors.departmentId) {
+                        setErrors(prev => ({ ...prev, departmentId: null }));
                       }
                     }}
+                    label="Khoa"
+                    sx={{ minHeight: 56 }}
+                    disabled={loading}
                   >
-                    {subjects.map(subject => (
-                      <MenuItem key={subject.id} value={subject.id}>
+                    <MenuItem value="">
+                      <em>Chọn khoa trước</em>
+                    </MenuItem>
+                    {departments.map(dept => (
+                      <MenuItem key={dept.id} value={dept.id}>
                         <Box>
-                          <Box sx={{ fontWeight: 500 }}>{subject.code}</Box>
-                          <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-                            {subject.name}
-                          </Box>
+                          <Typography>
+                            {dept.fullName}
+                          </Typography>
                         </Box>
                       </MenuItem>
                     ))}
                   </Select>
-                  {errors.subjectId && <FormHelperText>{errors.subjectId}</FormHelperText>}
+                  {errors.departmentId && <FormHelperText>{errors.departmentId}</FormHelperText>}
                 </FormControl>
               </Grid>
+
+              <Grid item xs={12} md={6} width={'45%'}>
+                <Autocomplete
+                  value={filteredSubjects.find(subject => subject.id === formData.subjectId) || null}
+                  onChange={(event, newValue) => {
+                    setFormData(prev => ({ ...prev, subjectId: newValue ? newValue.id : '' }));
+                    // Clear error for this field when user updates it
+                    if (errors.subjectId) {
+                      setErrors(prev => ({ ...prev, subjectId: null }));
+                    }
+                  }}
+                  options={filteredSubjects}
+                  getOptionLabel={(option) => `${option.name}(${option.code})`}
+                  renderOption={(props, option) => (
+                    <Box component="li" {...props} sx={{ flexDirection: 'column', alignItems: 'flex-start', py: 1.5 }}>
+                      <Box sx={{ width: '100%', py: 0.5}}>
+                        <Typography variant="body2" sx={{ fontWeight: 400, color: 'text.primary'}}>
+                          {option.name} ({option.code})
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Học phần *"
+                      placeholder={selectedDepartment ? "Tìm kiếm học phần..." : "Vui lòng chọn khoa trước"}
+                      variant="outlined"
+                      fullWidth
+                      error={!!errors.subjectId}
+                      helperText={errors.subjectId || (selectedDepartment ? `${filteredSubjects.length} học phần có sẵn` : 'Chọn khoa để hiển thị học phần')}
+                      sx={{ 
+                        '& .MuiInputBase-root': { minHeight: 56 },
+                        minWidth: '100%'
+                      }}
+                    />
+                  )}
+                  disabled={loading || !selectedDepartment}
+                  filterOptions={(options, { inputValue }) => {
+                    const filterValue = inputValue.toLowerCase();
+                    return options.filter(option =>
+                      option.code.toLowerCase().includes(filterValue) ||
+                      option.name.toLowerCase().includes(filterValue)
+                    );
+                  }}
+                  ListboxProps={{
+                    style: {
+                      maxHeight: 400
+                    }
+                  }}
+                  size="medium"
+                  sx={{ minWidth: '100%' }}
+                  noOptionsText={selectedDepartment ? "Không tìm thấy học phần" : "Vui lòng chọn khoa trước"}
+                />
+              </Grid>
               
-              <Grid item xs={12} md={6} sx={{ width: { xs: '100%', md: '50%' } }}>
+              <Grid item xs={12} md={6} width={'30%'}>
                 <TextField
                   name="numberOfClasses"
                   label="Số lớp muốn thêm"

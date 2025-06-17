@@ -192,21 +192,21 @@ const TeacherYearlyReportPage = () => {
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6} md={4} width="30%">
               {canViewAllData(user?.role) ? (
-                <FormControl fullWidth>
-                  <InputLabel>Giáo viên</InputLabel>
-                  <Select
-                    value={selectedTeacherId}
-                    onChange={(e) => setSelectedTeacherId(e.target.value)}
-                    label="Giáo viên"
-                    disabled={loading}
-                  >
-                    {teachers.map(teacher => (
-                      <MenuItem key={teacher.id} value={teacher.id}>
-                        {teacher.fullName} ({teacher.code})
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Giáo viên</InputLabel>
+                <Select
+                  value={selectedTeacherId}
+                  onChange={(e) => setSelectedTeacherId(e.target.value)}
+                  label="Giáo viên"
+                  disabled={loading}
+                >
+                  {teachers.map(teacher => (
+                    <MenuItem key={teacher.id} value={teacher.id}>
+                      {teacher.fullName} ({teacher.code})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               ) : (
                 <TextField
                   fullWidth

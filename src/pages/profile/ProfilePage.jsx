@@ -130,11 +130,11 @@ const ProfilePage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Box sx={{ mb: 3, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Thông tin cá nhân
-        </Typography>
+        </Typography>   
       </Box>
 
       <Grid container spacing={4}>

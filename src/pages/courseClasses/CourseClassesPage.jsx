@@ -23,14 +23,17 @@ import {
   TextField, 
   Fab,
   Chip,
-  CircularProgress
+  CircularProgress,
+  Autocomplete
 } from '@mui/material';
 import { 
   Add as AddIcon, 
   Delete as DeleteIcon, 
-  Save as SaveIcon
+  Save as SaveIcon,
+  Search as SearchIcon,
+  FilterList as FilterIcon
 } from '@mui/icons-material';
-import { SemesterAPI, CourseClassAPI } from '../../services/api';
+import { SemesterAPI, CourseClassAPI, DepartmentAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { canCreate, canUpdate, canDelete, canViewAllData, ROLES } from '../../utils/permissions';
 import CourseClassFormDialog from '../../components/courseClasses/CourseClassFormDialog';
@@ -39,10 +42,14 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 const CourseClassesPage = () => {
   const { user } = useAuth();
   const [semesters, setSemesters] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [selectedSemesterId, setSelectedSemesterId] = useState('');
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [courseClassesBySubject, setCourseClassesBySubject] = useState([]);
+  const [filteredCourseClasses, setFilteredCourseClasses] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -95,13 +102,18 @@ const CourseClassesPage = () => {
     return closestSemester;
   };
 
-  // Fetch semesters on component mount and auto-select latest
+  // Fetch semesters and departments on component mount and auto-select latest
   useEffect(() => {
-    const fetchSemesters = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await SemesterAPI.getAll();
-        const semestersList = response.data.data || [];
+        const [semestersResponse, departmentsResponse] = await Promise.all([
+          SemesterAPI.getAll(),
+          DepartmentAPI.getAll()
+        ]);
+        
+        const semestersList = semestersResponse.data.data || [];
         setSemesters(semestersList);
+        setDepartments(departmentsResponse.data.data || []);
         
         // Auto-select smallest (earliest) academic year
         const academicYears = [...new Set(semestersList.map(s => s.academicYear))].sort();
@@ -117,12 +129,12 @@ const CourseClassesPage = () => {
           }
         }
       } catch (err) {
-        console.error('Failed to fetch semesters:', err);
-        setError('Không thể tải dữ liệu kỳ học. Vui lòng thử lại sau.');
+        console.error('Failed to fetch initial data:', err);
+        setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
       }
     };
 
-    fetchSemesters();
+    fetchInitialData();
   }, []);
 
   // Fetch course classes when semester is selected
@@ -131,9 +143,15 @@ const CourseClassesPage = () => {
       fetchCourseClassesBySemester();
     } else {
       setCourseClassesBySubject([]);
+      setFilteredCourseClasses([]);
       setSelectedSubject(null);
     }
   }, [selectedSemesterId]);
+
+  // Filter course classes when filters change
+  useEffect(() => {
+    filterCourseClasses();
+  }, [courseClassesBySubject, selectedDepartment, searchTerm]);
 
   const fetchCourseClassesBySemester = async () => {
     setLoading(true);
@@ -156,6 +174,30 @@ const CourseClassesPage = () => {
     }
   };
 
+  const filterCourseClasses = () => {
+    let filtered = [...courseClassesBySubject];
+
+    // Filter by department
+    if (selectedDepartment) {
+      filtered = filtered.filter(subjectData => 
+        subjectData.subject.department?.id === selectedDepartment
+      );
+    }
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(subjectData => 
+        subjectData.subject.code.toLowerCase().includes(searchLower) ||
+        subjectData.subject.name.toLowerCase().includes(searchLower) ||
+        subjectData.subject.department?.shortName?.toLowerCase().includes(searchLower) ||
+        subjectData.subject.department?.fullName?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    setFilteredCourseClasses(filtered);
+  };
+
   // Generate academic year options based on semesters - sort from smallest to largest
   const academicYears = [...new Set(semesters.map(s => s.academicYear))].sort();
 
@@ -169,6 +211,7 @@ const CourseClassesPage = () => {
     setSelectedSemesterId('');
     setSelectedSubject(null);
     setCourseClassesBySubject([]);
+    setFilteredCourseClasses([]);
     setPendingChanges({});
   };
 
@@ -176,6 +219,16 @@ const CourseClassesPage = () => {
     setSelectedSemesterId(e.target.value);
     setSelectedSubject(null);
     setPendingChanges({});
+  };
+
+  const handleDepartmentChange = (e) => {
+    setSelectedDepartment(e.target.value);
+    setSelectedSubject(null);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setSelectedSubject(null);
   };
 
   const handleSubjectSelect = (subject) => {
@@ -349,15 +402,40 @@ const CourseClassesPage = () => {
         </Alert>
       )}
 
-      {/* Selection Controls */}
+      {/* Quản lý lớp học phần - Gộp Selection Controls và Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Lọc theo kỳ học
-          </Typography>
-          <Grid container spacing={3} sx={{ width: '100%' }}>
-            <Grid item xs={12} sm={6} md={4} sx={{ width: '33.33%' }}>
-              <FormControl fullWidth size="medium" sx={{ minWidth: '100%' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+            <Box>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <FilterIcon />
+                Quản lý lớp học phần
+              </Typography>
+            </Box>
+            {canCreate(user?.role) && selectedSemesterId && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleAddCourseClass}
+                size="large"
+                sx={{ 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1.5,
+                  minWidth: 180
+                }}
+              >
+                Thêm lớp học phần
+              </Button>
+            )}
+          </Box>
+          
+          {/* Filter and search */}
+          <Grid container spacing={2} sx={{ mb: selectedSemesterId ? 3 : 0, alignItems: 'center' }}>
+            <Grid item xs={12} sm={4} md={3} lg={2.5}>
+              <FormControl fullWidth size="medium">
                 <InputLabel>Năm học</InputLabel>
                 <Select
                   value={selectedAcademicYear}
@@ -374,8 +452,8 @@ const CourseClassesPage = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={4} sx={{ width: '33.33%' }}>
-              <FormControl fullWidth size="medium" sx={{ minWidth: '100%' }}>
+            <Grid item xs={12} sm={4} md={2.5} lg={2} width={'10%'}>
+              <FormControl fullWidth size="medium" >
                 <InputLabel>Kỳ học</InputLabel>
                 <Select
                   value={selectedSemesterId}
@@ -392,8 +470,44 @@ const CourseClassesPage = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={12} md={4} sx={{ width: '33.33%' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            <Grid item xs={12} sm={4} md={3} lg={2.5} width={'25%'}>
+              <FormControl fullWidth size="medium">
+                <InputLabel>Khoa</InputLabel>
+                <Select
+                  value={selectedDepartment}
+                  onChange={handleDepartmentChange}
+                  label="Khoa"
+                  disabled={!selectedSemesterId}
+                >
+                  <MenuItem value="">
+                    <em>Tất cả khoa</em>
+                  </MenuItem>
+                  {departments.map(dept => (
+                    <MenuItem key={dept.id} value={dept.id}>
+                      {dept.fullName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={4} lg={5} width={'30%'}>
+              <TextField
+                fullWidth
+                size="medium"
+                label="Tìm kiếm học phần"
+                placeholder="Mã học phần, tên học phần, khoa..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />
+                }}
+                disabled={!selectedSemesterId}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={12} lg={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center', height: '40px', mt: { xs: 1, md: 0 } }}>
                 {loading && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CircularProgress size={20} />
@@ -405,25 +519,30 @@ const CourseClassesPage = () => {
               </Box>
             </Grid>
           </Grid>
+
+          
         </CardContent>
       </Card>
 
       {/* Subjects List */}
-      {selectedSemesterId && courseClassesBySubject.length > 0 && (
+      {selectedSemesterId && filteredCourseClasses.length > 0 && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">
-                Danh sách học phần
+                Danh sách học phần {filteredCourseClasses.length !== courseClassesBySubject.length && 
+                  `(${filteredCourseClasses.length}/${courseClassesBySubject.length})`}
               </Typography>
             </Box>
             
             <Grid container spacing={2}>
-              {courseClassesBySubject.map((subjectData, index) => {
+              {filteredCourseClasses.map((subjectData, index) => {
                 // Define colors for different subjects
                 const colors = [
-                  '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC',
-                  '#E0F2F1', '#F1F8E9', '#FFF8E1', '#E8EAF6', '#FFEBEE'
+                  '#E3F2FD', '#FCE4EC', '#E8F5E9', '#FFF3E0', '#E0F2F1',
+                  '#F3E5F5', '#FFF9C4', '#D1C4E9', '#C8E6C9', '#FFCDD2',
+                  '#B2EBF2', '#F8BBD0', '#DCEDC8', '#FFE0B2', '#B3E5FC',
+                  '#D7CCC8', '#FFECB3', '#CFD8DC', '#F48FB1', '#AED581'
                 ];
                 const backgroundColor = colors[index % colors.length];
                 
@@ -536,7 +655,7 @@ const CourseClassesPage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {courseClassesBySubject
+                  {filteredCourseClasses
                     .find(s => s.subject.id === selectedSubject.id)
                     ?.classes.map((courseClass) => (
                       <TableRow 
@@ -616,16 +735,19 @@ const CourseClassesPage = () => {
         </Card>
       )}
 
-      {/* Add FAB - Only show for users who can create */}
-      {canCreate(user?.role) && (
-        <Fab
-          color="primary"
-          aria-label="add"
-          sx={{ position: 'fixed', bottom: 16, right: 16 }}
-          onClick={handleAddCourseClass}
-        >
-          <AddIcon />
-        </Fab>
+      {/* Show message when no data after filtering */}
+      {selectedSemesterId && courseClassesBySubject.length > 0 && filteredCourseClasses.length === 0 && (
+        <Card>
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <SearchIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary" gutterBottom>
+              Không tìm thấy học phần nào
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+            </Typography>
+          </CardContent>
+        </Card>
       )}
 
       {/* Form Dialog */}
