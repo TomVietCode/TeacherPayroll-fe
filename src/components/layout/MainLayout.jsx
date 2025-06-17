@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { 
-  AppBar, Toolbar, Typography, Box, IconButton, 
+  Toolbar, Typography, Box, IconButton, 
   Drawer, List, ListItem, ListItemIcon, ListItemText, 
   ListItemButton, Divider, Container, useMediaQuery,
   Collapse, Breadcrumbs, Link as MuiLink
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SchoolIcon from '@mui/icons-material/School';
@@ -29,10 +28,14 @@ import CalculateIcon from '@mui/icons-material/Calculate';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import { useLocation, useNavigate } from 'react-router-dom';
+import AuthenticatedHeader from './AuthenticatedHeader';
+import { useAuth } from '../../contexts/AuthContext';
+import { canAccessPage, ROLES } from '../../utils/permissions';
 
 // Helper function to get section name from path
 const getSectionName = (path) => {
   if (path === '/' || path === '/statistics') return 'Thống kê';
+  if (path === '/profile') return 'Thông tin cá nhân';
   if (path.includes('degrees')) return 'Bằng cấp';
   if (path.includes('departments')) return 'Khoa';
   if (path.includes('teachers') && !path.includes('teacher-assignments')) return 'Giáo viên';
@@ -57,7 +60,8 @@ const miniDrawerWidth = 64;
 function MainLayout({ children }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile); // Default open on desktop, closed on mobile
+  const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [teacherMenuOpen, setTeacherMenuOpen] = useState(true);
   const [classMenuOpen, setClassMenuOpen] = useState(false);
   const [payrollMenuOpen, setPayrollMenuOpen] = useState(false);
@@ -74,7 +78,6 @@ function MainLayout({ children }) {
       if (teacherMenuOpen) {
         setTeacherMenuOpen(false);
       } else {
-        // Đóng tất cả menu khác và mở menu teacher
         setClassMenuOpen(false);
         setPayrollMenuOpen(false);
         setReportMenuOpen(false);
@@ -94,7 +97,6 @@ function MainLayout({ children }) {
       if (classMenuOpen) {
         setClassMenuOpen(false);
       } else {
-        // Đóng tất cả menu khác và mở menu class
         setTeacherMenuOpen(false);
         setPayrollMenuOpen(false);
         setReportMenuOpen(false);
@@ -114,7 +116,6 @@ function MainLayout({ children }) {
       if (payrollMenuOpen) {
         setPayrollMenuOpen(false);
       } else {
-        // Đóng tất cả menu khác và mở menu payroll
         setTeacherMenuOpen(false);
         setClassMenuOpen(false);
         setReportMenuOpen(false);
@@ -134,7 +135,6 @@ function MainLayout({ children }) {
       if (reportMenuOpen) {
         setReportMenuOpen(false);
       } else {
-        // Đóng tất cả menu khác và mở menu report
         setTeacherMenuOpen(false);
         setClassMenuOpen(false);
         setPayrollMenuOpen(false);
@@ -149,44 +149,119 @@ function MainLayout({ children }) {
     }
   };
 
-  // Submenu items for teacher management
-  const teacherSubMenuItems = [
-    { text: 'Thống kê', icon: <EqualizerIcon />, path: '/' },
-    { text: 'Bằng cấp', icon: <SchoolIcon />, path: '/degrees' },
-    { text: 'Khoa', icon: <DomainIcon />, path: '/departments' },
-    { text: 'Giáo viên', icon: <PersonIcon />, path: '/teachers' },
-  ];
+  // Role-based menu configuration
+  const getMenuConfig = () => {
+    const userRole = user?.role;
 
-  // Submenu items for class management (including teacher assignments)
-  const classSubMenuItems = [
-    { text: 'Học phần', icon: <BookIcon />, path: '/subjects' },
-    { text: 'Kỳ học', icon: <CalendarTodayIcon />, path: '/semesters' },
-    { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
-    { text: 'Phân công giáo viên', icon: <AssignmentIcon />, path: '/teacher-assignments' },
-    { text: 'Thống kê lớp học phần', icon: <EqualizerIcon />, path: '/course-class-statistics' },
-  ];
+    if (userRole === ROLES.TEACHER) {
+      // Teacher menu - simplified
+      return {
+        sections: [
+          {
+            title: 'Thông tin cá nhân',
+            icon: <PeopleIcon />,
+            items: [
+              { text: 'Thống kê', icon: <EqualizerIcon />, path: '/' },
+              { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
+              { text: 'Phân công giảng dạy', icon: <AssignmentIcon />, path: '/teacher-assignments' }
+            ]
+          },
+          {
+            title: 'Tiền dạy',
+            icon: <AccountBalanceWalletIcon />,
+            items: [
+              { text: 'Tính tiền dạy', icon: <CalculateIcon />, path: '/payroll-calculation' },
+              { text: 'Báo cáo cá nhân', icon: <PersonIcon />, path: '/reports/teacher-yearly' }
+            ]
+          }
+        ]
+      };
+    }
 
-  // Submenu items for payroll management
-  const payrollSubMenuItems = [
-    { text: 'Định mức tiền theo tiết', icon: <AttachMoneyIcon />, path: '/hourly-rates' },
-    { text: 'Hệ số giáo viên', icon: <TrendingUpIcon />, path: '/teacher-coefficients' },
-    { text: 'Hệ số lớp', icon: <SettingsIcon />, path: '/class-coefficients' },
-    { text: 'Tính tiền dạy', icon: <CalculateIcon />, path: '/payroll-calculation' },
-  ];
+    // Default menu for admin, faculty manager, accountant
+    const fullSections = [
+      {
+        title: 'Quản lý giáo viên',
+        icon: <PeopleIcon />,
+        items: [
+          { text: 'Thống kê', icon: <EqualizerIcon />, path: '/' },
+          { text: 'Bằng cấp', icon: <SchoolIcon />, path: '/degrees' },
+          { text: 'Khoa', icon: <DomainIcon />, path: '/departments' },
+          { text: 'Giáo viên', icon: <PeopleIcon />, path: '/teachers' }
+        ]
+      },
+      {
+        title: 'Quản lý lớp học phần',
+        icon: <ClassIcon />,
+        items: [
+          { text: 'Học phần', icon: <BookIcon />, path: '/subjects' },
+          { text: 'Kỳ học', icon: <CalendarTodayIcon />, path: '/semesters' },
+          { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
+          { text: 'Phân công giáo viên', icon: <AssignmentIcon />, path: '/teacher-assignments' },
+          { text: 'Thống kê lớp học phần', icon: <EqualizerIcon />, path: '/course-class-statistics' }
+        ]
+      },
+      {
+        title: 'Tính tiền dạy',
+        icon: <AccountBalanceWalletIcon />,
+        items: [
+          { text: 'Định mức tiền theo tiết', icon: <AttachMoneyIcon />, path: '/hourly-rates' },
+          { text: 'Hệ số giáo viên', icon: <TrendingUpIcon />, path: '/teacher-coefficients' },
+          { text: 'Hệ số lớp', icon: <SettingsIcon />, path: '/class-coefficients' },
+          { text: 'Tính tiền dạy', icon: <CalculateIcon />, path: '/payroll-calculation' }
+        ]
+      },
+      {
+        title: 'Báo cáo tiền dạy',
+        icon: <AssessmentIcon />,
+        items: [
+          { text: 'Báo cáo giáo viên theo năm', icon: <PersonIcon />, path: '/reports/teacher-yearly' },
+          { text: 'Báo cáo theo khoa', icon: <DomainIcon />, path: '/reports/department' },
+          { text: 'Báo cáo toàn trường', icon: <SchoolIcon />, path: '/reports/school' }
+        ]
+      }
+    ];
 
-  // Submenu items for report management - UC4
-  const reportSubMenuItems = [
-    { text: 'Báo cáo giáo viên theo năm', icon: <PersonIcon />, path: '/reports/teacher-yearly' },
-    { text: 'Báo cáo theo khoa', icon: <DomainIcon />, path: '/reports/department' },
-    { text: 'Báo cáo toàn trường', icon: <SchoolIcon />, path: '/reports/school' },
-  ];
+    // Filter based on role
+    if (userRole === ROLES.ACCOUNTANT) {
+      return {
+        sections: [
+          {
+            ...fullSections[0],
+            items: fullSections[0].items.filter(item => item.path === '/')
+          },
+          fullSections[2], // Payroll management
+          fullSections[3]  // Reports
+        ]
+      };
+    }
+
+    if (userRole === ROLES.FACULTY_MANAGER) {
+      return {
+        sections: [
+          fullSections[0], // Teacher management
+          fullSections[1], // Class management
+          {
+            ...fullSections[2],
+            items: fullSections[2].items.filter(item => item.path === '/payroll-calculation')
+          },
+          fullSections[3]  // Reports
+        ]
+      };
+    }
+
+    // Admin gets full menu
+    return { sections: fullSections };
+  };
+
+  const menuConfig = getMenuConfig();
   
   const drawer = (
     <div>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1 }}>
         {sidebarOpen && (
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, pl: 1 }}>
-            Quản lý tiền dạy
+            {user?.role === ROLES.TEACHER ? 'Giáo viên' : 'Quản lý tiền dạy'}
           </Typography>
         )}
         <IconButton onClick={handleDrawerToggle}>
@@ -195,245 +270,81 @@ function MainLayout({ children }) {
       </Box>
       <Divider />
       <List>
-        {/* Teacher Management Dropdown */}
-        <ListItem disablePadding>
-          <ListItemButton 
-            onClick={handleTeacherMenuToggle}
-            sx={{ 
-              justifyContent: sidebarOpen ? 'initial' : 'center',
-              px: sidebarOpen ? 2.5 : 'auto',
-              minHeight: 48,
-            }}
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                mr: sidebarOpen ? 2 : 'auto',
-                justifyContent: 'center',
-              }}
-            >
-              <PeopleIcon />
-            </ListItemIcon>
-            {sidebarOpen && (
-              <>
-                <ListItemText primary="Quản lý giáo viên" />
-                {teacherMenuOpen ? <ExpandLess /> : <ExpandMore />}
-              </>
-            )}
-          </ListItemButton>
-        </ListItem>
-        
-        {/* Teacher Submenu items */}
-        <Collapse in={sidebarOpen && teacherMenuOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {teacherSubMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton 
-                  selected={location.pathname === item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (isMobile) {
-                      setSidebarOpen(false);
-                    }
-                  }}
-                  sx={{ 
-                    pl: 4,
-                    minHeight: 40,
+        {menuConfig.sections.map((section, sectionIndex) => (
+          <div key={sectionIndex}>
+            <ListItem disablePadding>
+              <ListItemButton 
+                onClick={() => {
+                  // Handle section toggle based on index
+                  if (sectionIndex === 0) handleTeacherMenuToggle();
+                  else if (sectionIndex === 1) handleClassMenuToggle();
+                  else if (sectionIndex === 2) handlePayrollMenuToggle();
+                  else if (sectionIndex === 3) handleReportMenuToggle();
+                }}
+                sx={{ 
+                  justifyContent: sidebarOpen ? 'initial' : 'center',
+                  px: sidebarOpen ? 2.5 : 'auto',
+                  minHeight: 48,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: sidebarOpen ? 2 : 'auto',
+                    justifyContent: 'center',
                   }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 40,
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Collapse>
-
-        {/* Class Management Dropdown (now includes Teacher Assignment) */}
-        <ListItem disablePadding>
-          <ListItemButton 
-            onClick={handleClassMenuToggle}
-            sx={{ 
-              justifyContent: sidebarOpen ? 'initial' : 'center',
-              px: sidebarOpen ? 2.5 : 'auto',
-              minHeight: 48,
-            }}
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                mr: sidebarOpen ? 2 : 'auto',
-                justifyContent: 'center',
-              }}
-            >
-              <ClassIcon />
-            </ListItemIcon>
-            {sidebarOpen && (
-              <>
-                <ListItemText primary="Quản lý lớp học phần" />
-                {classMenuOpen ? <ExpandLess /> : <ExpandMore />}
-              </>
-            )}
-          </ListItemButton>
-        </ListItem>
-        
-        {/* Class Submenu items (including Teacher Assignment) */}
-        <Collapse in={sidebarOpen && classMenuOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {classSubMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton 
-                  selected={location.pathname === item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (isMobile) {
-                      setSidebarOpen(false);
-                    }
-                  }}
-                  sx={{ 
-                    pl: 4,
-                    minHeight: 40,
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 40,
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Collapse>
-
-        {/* Payroll Management Dropdown */}
-        <ListItem disablePadding>
-          <ListItemButton 
-            onClick={handlePayrollMenuToggle}
-            sx={{ 
-              justifyContent: sidebarOpen ? 'initial' : 'center',
-              px: sidebarOpen ? 2.5 : 'auto',
-              minHeight: 48,
-            }}
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                mr: sidebarOpen ? 2 : 'auto',
-                justifyContent: 'center',
-              }}
-            >
-              <AccountBalanceWalletIcon />
-            </ListItemIcon>
-            {sidebarOpen && (
-              <>
-                <ListItemText primary="Tính tiền dạy" />
-                {payrollMenuOpen ? <ExpandLess /> : <ExpandMore />}
-              </>
-            )}
-          </ListItemButton>
-        </ListItem>
-        
-        {/* Payroll Submenu items */}
-        <Collapse in={sidebarOpen && payrollMenuOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {payrollSubMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton 
-                  selected={location.pathname === item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (isMobile) {
-                      setSidebarOpen(false);
-                    }
-                  }}
-                  sx={{ 
-                    pl: 4,
-                    minHeight: 40,
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 40,
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Collapse>
-
-        {/* Report Management Dropdown - UC4 */}
-        <ListItem disablePadding>
-          <ListItemButton 
-            onClick={handleReportMenuToggle}
-            sx={{ 
-              justifyContent: sidebarOpen ? 'initial' : 'center',
-              px: sidebarOpen ? 2.5 : 'auto',
-              minHeight: 48,
-            }}
-          >
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                mr: sidebarOpen ? 2 : 'auto',
-                justifyContent: 'center',
-              }}
-            >
-              <AssessmentIcon />
-            </ListItemIcon>
-            {sidebarOpen && (
-              <>
-                <ListItemText primary="Báo cáo tiền dạy" />
-                {reportMenuOpen ? <ExpandLess /> : <ExpandMore />}
-              </>
-            )}
-          </ListItemButton>
-        </ListItem>
-        
-        {/* Report Submenu items */}
-        <Collapse in={sidebarOpen && reportMenuOpen} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {reportSubMenuItems.map((item) => (
-              <ListItem key={item.text} disablePadding>
-                <ListItemButton 
-                  selected={location.pathname === item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    if (isMobile) {
-                      setSidebarOpen(false);
-                    }
-                  }}
-                  sx={{ 
-                    pl: 4,
-                    minHeight: 40,
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 40,
-                    }}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Collapse>
+                  {section.icon}
+                </ListItemIcon>
+                {sidebarOpen && (
+                  <>
+                    <ListItemText primary={section.title} />
+                    {(sectionIndex === 0 && teacherMenuOpen) ||
+                     (sectionIndex === 1 && classMenuOpen) ||
+                     (sectionIndex === 2 && payrollMenuOpen) ||
+                     (sectionIndex === 3 && reportMenuOpen) ? <ExpandLess /> : <ExpandMore />}
+                  </>
+                )}
+              </ListItemButton>
+            </ListItem>
+            
+            <Collapse in={sidebarOpen && (
+              (sectionIndex === 0 && teacherMenuOpen) ||
+              (sectionIndex === 1 && classMenuOpen) ||
+              (sectionIndex === 2 && payrollMenuOpen) ||
+              (sectionIndex === 3 && reportMenuOpen)
+            )} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {section.items.filter(item => canAccessPage(user?.role, item.path)).map((item) => (
+                  <ListItem key={item.text} disablePadding>
+                    <ListItemButton 
+                      selected={location.pathname === item.path}
+                      onClick={() => {
+                        navigate(item.path);
+                        if (isMobile) {
+                          setSidebarOpen(false);
+                        }
+                      }}
+                      sx={{ 
+                        pl: 4,
+                        minHeight: 40,
+                      }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 40,
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
+                      <ListItemText primary={item.text} />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Collapse>
+          </div>
+        ))}
       </List>
     </div>
   );
@@ -452,33 +363,11 @@ function MainLayout({ children }) {
   
   return (
     <Box sx={{ display: 'flex', width: '100%', height: '100vh', overflow: 'hidden' }}>
-      <AppBar 
-        position="fixed" 
-        sx={{
-          width: contentWidth,
-          ml: contentMargin,
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          transition: theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="toggle drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Phần mềm tính tiền dạy cho giáo viên
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <AuthenticatedHeader 
+        onMenuToggle={handleDrawerToggle}
+        contentWidth={contentWidth}
+        contentMargin={contentMargin}
+      />
       <Box
         component="nav"
         sx={{ 
@@ -495,7 +384,7 @@ function MainLayout({ children }) {
           open={isMobile ? sidebarOpen : true}
           onClose={isMobile ? handleDrawerToggle : undefined}
           ModalProps={{
-            keepMounted: true // Better open performance on mobile
+            keepMounted: true
           }}
           sx={{
             '& .MuiDrawer-paper': { 
@@ -531,7 +420,6 @@ function MainLayout({ children }) {
       >
         <Toolbar />
         
-        {/* Breadcrumb navigation - moved below header */}
         <Box 
           sx={{ 
             pl: 3, 
@@ -558,7 +446,7 @@ function MainLayout({ children }) {
               }}
               onClick={() => navigate('/')}
             >
-              Quản lý giáo viên
+              {user?.role === ROLES.TEACHER ? 'Giáo viên' : 'Quản lý giáo viên'}
             </MuiLink>
             {sectionName && (
               <Typography color="primary" sx={{ fontWeight: 500 }}>

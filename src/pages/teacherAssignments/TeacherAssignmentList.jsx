@@ -48,12 +48,15 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { TeacherAssignmentAPI, TeacherAPI, DepartmentAPI, SemesterAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { canCreate, canUpdate, canDelete, canViewAllData, ROLES } from '../../utils/permissions';
 
 // Import the components for tabs
 import BulkAssignment from './BulkAssignment';
 
 const TeacherAssignmentList = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Tab state
   const [currentTab, setCurrentTab] = useState(0);
@@ -112,6 +115,11 @@ const TeacherAssignmentList = () => {
         ...filters,
       };
 
+      // For teachers, only show their own assignments
+      if (user?.role === ROLES.TEACHER && user?.teacher?.id) {
+        params.teacherId = user.teacher.id;
+      }
+
       // Remove empty filters
       Object.keys(params).forEach(key => {
         if (params[key] === '') delete params[key];
@@ -151,6 +159,14 @@ const TeacherAssignmentList = () => {
       setTeachers(Array.isArray(teachersData) ? teachersData : []);
       setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
       setSemesters(Array.isArray(semestersData) ? semestersData : []);
+
+      // For teachers, auto-set their own teacher ID in filters
+      if (user?.role === ROLES.TEACHER && user?.teacher?.id) {
+        setFilters(prev => ({
+          ...prev,
+          teacherId: user.teacher.id
+        }));
+      }
     } catch (err) {
       console.error('Error loading filter options:', err);
       // Set empty arrays on error
@@ -161,6 +177,11 @@ const TeacherAssignmentList = () => {
   };
 
   const handleFilterChange = (field, value) => {
+    // Teachers cannot change teacher filter
+    if (field === 'teacherId' && user?.role === ROLES.TEACHER) {
+      return;
+    }
+    
     setFilters(prev => ({
       ...prev,
       [field]: value,
@@ -169,12 +190,13 @@ const TeacherAssignmentList = () => {
   };
 
   const clearFilters = () => {
-    setFilters({
-      teacherId: '',
+    const newFilters = {
+      teacherId: user?.role === ROLES.TEACHER && user?.teacher?.id ? user.teacher.id : '',
       semesterId: '',
       departmentId: '',
       search: '',
-    });
+    };
+    setFilters(newFilters);
     setPage(0);
   };
 
@@ -211,7 +233,7 @@ const TeacherAssignmentList = () => {
         <CardContent>
           <Typography variant="h6" gutterBottom>
             <FilterIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Bộ lọc
+            {user?.role === ROLES.TEACHER ? 'Tìm kiếm' : 'Bộ lọc'}
           </Typography>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6} md={4}>
@@ -226,67 +248,75 @@ const TeacherAssignmentList = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={2.5} width={"20%"}>
-              <FormControl fullWidth>
-                <InputLabel>Giáo viên</InputLabel>
-                <Select
-                  value={filters.teacherId}
-                  onChange={(e) => handleFilterChange('teacherId', e.target.value)}
-                  label="Giáo viên"
-                >
-                  <MenuItem value="">Tất cả giáo viên</MenuItem>
-                  {teachers.map((teacher) => (
-                    <MenuItem key={teacher.id} value={teacher.id}>
-                      {teacher.fullName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2.5} width={"15%"}>
-              <FormControl fullWidth>
-                <InputLabel>Khoa</InputLabel>
-                <Select
-                  value={filters.departmentId}
-                  onChange={(e) => handleFilterChange('departmentId', e.target.value)}
-                  label="Khoa"
-                >
-                  <MenuItem value="">Tất cả khoa</MenuItem>
-                  {departments.map((dept) => (
-                    <MenuItem key={dept.id} value={dept.id}>
-                      {dept.shortName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2.5} width={"25%"}>
-              <FormControl fullWidth>
-                <InputLabel>Kỳ học</InputLabel>
-                <Select
-                  value={filters.semesterId}
-                  onChange={(e) => handleFilterChange('semesterId', e.target.value)}
-                  label="Kỳ học"
-                >
-                  <MenuItem value="">Tất cả kỳ học</MenuItem>
-                  {semesters.map((semester) => (
-                    <MenuItem key={semester.id} value={semester.id}>
-                      {semester.academicYear} - Kỳ {semester.termNumber}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+            {/* Hide other filters for teachers */}
+            {user?.role !== ROLES.TEACHER && (
+              <>
+                <Grid item xs={12} sm={6} md={2.5} width={"20%"}>
+                  <FormControl fullWidth>
+                    <InputLabel>Giáo viên</InputLabel>
+                    <Select
+                      value={filters.teacherId}
+                      onChange={(e) => handleFilterChange('teacherId', e.target.value)}
+                      label="Giáo viên"
+                    >
+                      <MenuItem value="">Tất cả giáo viên</MenuItem>
+                      {teachers.map((teacher) => (
+                        <MenuItem key={teacher.id} value={teacher.id}>
+                          {teacher.fullName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.5} width={"15%"}>
+                  <FormControl fullWidth>
+                    <InputLabel>Khoa</InputLabel>
+                    <Select
+                      value={filters.departmentId}
+                      onChange={(e) => handleFilterChange('departmentId', e.target.value)}
+                      label="Khoa"
+                    >
+                      <MenuItem value="">Tất cả khoa</MenuItem>
+                      {departments.map((dept) => (
+                        <MenuItem key={dept.id} value={dept.id}>
+                          {dept.shortName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={2.5} width={"25%"}>
+                  <FormControl fullWidth>
+                    <InputLabel>Kỳ học</InputLabel>
+                    <Select
+                      value={filters.semesterId}
+                      onChange={(e) => handleFilterChange('semesterId', e.target.value)}
+                      label="Kỳ học"
+                    >
+                      <MenuItem value="">Tất cả kỳ học</MenuItem>
+                      {semesters.map((semester) => (
+                        <MenuItem key={semester.id} value={semester.id}>
+                          {semester.academicYear} - Kỳ {semester.termNumber}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </>
+            )}
           </Grid>
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              variant="outlined"
-              onClick={clearFilters}
-              startIcon={<ClearIcon />}
-            >
-              Xóa bộ lọc
-            </Button>
-          </Box>
+          {/* Hide clear filters button for teachers since they only have search */}
+          {user?.role !== ROLES.TEACHER && (
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                onClick={clearFilters}
+                startIcon={<ClearIcon />}
+              >
+                Xóa bộ lọc
+              </Button>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
@@ -296,41 +326,46 @@ const TeacherAssignmentList = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Giáo viên</TableCell>
+                {/* Hide teacher column for teachers since they only see their own assignments */}
+                {user?.role !== ROLES.TEACHER && <TableCell>Giáo viên</TableCell>}
                 <TableCell>Lớp học phần</TableCell>
                 <TableCell>Học phần</TableCell>
                 <TableCell>Kỳ học</TableCell>
                 <TableCell>Khoa</TableCell>
                 <TableCell>Khối lượng</TableCell>
-                <TableCell align="center">Thao tác</TableCell>
+                {/* Hide action column for teachers */}
+                {user?.role !== ROLES.TEACHER && <TableCell align="center">Thao tác</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={user?.role === ROLES.TEACHER ? 5 : 7} align="center">
                     Đang tải...
                   </TableCell>
                 </TableRow>
               ) : assignments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={user?.role === ROLES.TEACHER ? 5 : 7} align="center">
                     Không tìm thấy phân công nào
                   </TableCell>
                 </TableRow>
               ) : (
                 assignments.map((assignment) => (
                   <TableRow key={assignment.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" fontWeight="medium">
-                          {assignment.teacher?.fullName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {assignment.teacher?.code}
-                        </Typography>
-                      </Box>
-                    </TableCell>
+                    {/* Hide teacher column for teachers */}
+                    {user?.role !== ROLES.TEACHER && (
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" fontWeight="medium">
+                            {assignment.teacher?.fullName}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {assignment.teacher?.code}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Box>
                         <Typography variant="body2" fontWeight="medium">
@@ -369,19 +404,22 @@ const TeacherAssignmentList = () => {
                         {assignment.workload || assignment.courseClass?.subject?.totalPeriods || 0} tiết
                       </Typography>
                     </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Tooltip title="Xóa phân công">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteClick(assignment)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
+                    {/* Hide action column for teachers */}
+                    {user?.role !== ROLES.TEACHER && (
+                      <TableCell align="center">
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Tooltip title="Xóa phân công">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteClick(assignment)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
@@ -413,7 +451,7 @@ const TeacherAssignmentList = () => {
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
-          Phân công giáo viên
+          {user?.role === ROLES.TEACHER ? 'Phân công của tôi' : 'Phân công giáo viên'}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -427,25 +465,27 @@ const TeacherAssignmentList = () => {
         </Box>
       </Box>
 
-      {/* Tabs */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={currentTab} onChange={handleTabChange} aria-label="assignment tabs">
-          <Tab 
-            icon={<ListIcon />} 
-            label="Danh sách phân công" 
-            iconPosition="start"
-          />
-          <Tab 
-            icon={<AssignmentIcon />} 
-            label="Phân công giáo viên" 
-            iconPosition="start"
-          />
-        </Tabs>
-      </Paper>
+      {/* Tabs - Hide assignment tab for teachers */}
+      {user?.role !== ROLES.TEACHER && (
+        <Paper sx={{ mb: 3 }}>
+          <Tabs value={currentTab} onChange={handleTabChange} aria-label="assignment tabs">
+            <Tab 
+              icon={<ListIcon />} 
+              label="Danh sách phân công" 
+              iconPosition="start"
+            />
+            <Tab 
+              icon={<AssignmentIcon />} 
+              label="Phân công giáo viên" 
+              iconPosition="start"
+            />
+          </Tabs>
+        </Paper>
+      )}
 
       {/* Tab Content */}
-      {currentTab === 0 && renderAssignmentsList()}
-      {currentTab === 1 && <BulkAssignment onSuccess={handleAssignmentSuccess} />}
+      {(currentTab === 0 || user?.role === ROLES.TEACHER) && renderAssignmentsList()}
+      {currentTab === 1 && user?.role !== ROLES.TEACHER && <BulkAssignment onSuccess={handleAssignmentSuccess} />}
 
       {/* Delete Confirmation Dialog */}
       <Dialog

@@ -34,8 +34,11 @@ import {
   Settings as SettingsIcon
 } from '@mui/icons-material';
 import { PayrollAPI, TeacherAPI, SemesterAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { canViewAllData, ROLES } from '../../utils/permissions';
 
 function PayrollCalculationPage() {
+  const { user } = useAuth();
   const [academicYears, setAcademicYears] = useState([]);
   const [semesters, setSemesters] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -75,6 +78,14 @@ function PayrollCalculationPage() {
       
       setAcademicYears(academicYearsResponse.data.data || []);
       setTeachers(teachersResponse.data.data || []);
+
+      // For teachers, auto-select their own teacher
+      if (user?.role === ROLES.TEACHER && user?.teacher) {
+        const teacherData = teachersResponse.data.data?.find(t => t.id === user.teacher.id);
+        if (teacherData) {
+          setSelectedTeacher(teacherData);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch initial data:', error);
       setError('Không thể tải dữ liệu ban đầu');
@@ -218,32 +229,42 @@ function PayrollCalculationPage() {
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4} width={"30%"}>
-                  <Autocomplete
-                    options={teachers}
-                    getOptionLabel={(teacher) => `${teacher.fullName} (${teacher.code})`}
-                    value={selectedTeacher}
-                    onChange={(event, newValue) => setSelectedTeacher(newValue)}
-                    disabled={calculating}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Giáo viên *"
-                        variant="outlined"
-                      />
-                    )}
-                    renderOption={(props, teacher) => (
-                      <Box component="li" {...props}>
-                        <Box>
-                          <Typography variant="body1">
-                            {teacher.fullName}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {teacher.code} - {teacher.degree?.fullName}
-                          </Typography>
+                  {canViewAllData(user?.role) ? (
+                    <Autocomplete
+                      options={teachers}
+                      getOptionLabel={(teacher) => `${teacher.fullName} (${teacher.code})`}
+                      value={selectedTeacher}
+                      onChange={(event, newValue) => setSelectedTeacher(newValue)}
+                      disabled={calculating}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Giáo viên *"
+                          variant="outlined"
+                        />
+                      )}
+                      renderOption={(props, teacher) => (
+                        <Box component="li" {...props}>
+                          <Box>
+                            <Typography variant="body1">
+                              {teacher.fullName}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {teacher.code} - {teacher.degree?.fullName}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    )}
-                  />
+                      )}
+                    />
+                  ) : (
+                    <TextField
+                      fullWidth
+                      label="Giáo viên"
+                      value={selectedTeacher ? `${selectedTeacher.fullName} (${selectedTeacher.code})` : ''}
+                      disabled
+                      variant="outlined"
+                    />
+                  )}
                 </Grid>
 
                 <Grid item xs={12}>

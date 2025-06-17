@@ -21,7 +21,8 @@ import {
   Grid,
   Chip,
   CircularProgress,
-  Divider
+  Divider,
+  TextField
 } from '@mui/material';
 import {
   Assessment as AssessmentIcon,
@@ -30,8 +31,11 @@ import {
   Person as PersonIcon
 } from '@mui/icons-material';
 import { ReportAPI, TeacherAPI, SemesterAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { canViewAllData, ROLES } from '../../utils/permissions';
 
 const TeacherYearlyReportPage = () => {
+  const { user } = useAuth();
   const [teachers, setTeachers] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
@@ -73,26 +77,33 @@ const TeacherYearlyReportPage = () => {
       } else if (uniqueYears.length > 0) {
         setSelectedAcademicYear(uniqueYears[uniqueYears.length - 1]); // Năm gần nhất
       }
+
+      // For teachers, auto-select their own teacher and generate report
+      if (user?.role === ROLES.TEACHER && user?.teacher?.id) {
+        setSelectedTeacherId(user.teacher.id);
+        
+        // Auto-generate report for current year if available
+        const yearToUse = currentAcademicYear || (uniqueYears.length > 0 ? uniqueYears[uniqueYears.length - 1] : null);
+        if (yearToUse) {
+          // Generate report automatically after state is set
+          setTimeout(() => {
+            generateReportForTeacher(user.teacher.id, yearToUse);
+          }, 100);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch initial data:', error);
       setError('Không thể tải dữ liệu ban đầu');
     }
   };
 
-  const handleGenerateReport = async () => {
-    if (!selectedTeacherId || !selectedAcademicYear) {
-      setSnackbar({
-        open: true,
-        message: 'Vui lòng chọn giáo viên và năm học',
-        severity: 'warning'
-      });
-      return;
-    }
+  const generateReportForTeacher = async (teacherId, academicYear) => {
+    if (!teacherId || !academicYear) return;
 
     setLoading(true);
     setError(null);
     try {
-      const response = await ReportAPI.getTeacherYearlyReport(selectedTeacherId, selectedAcademicYear);
+      const response = await ReportAPI.getTeacherYearlyReport(teacherId, academicYear);
       setReportData(response.data.data);
       setSnackbar({
         open: true,
@@ -111,6 +122,19 @@ const TeacherYearlyReportPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!selectedTeacherId || !selectedAcademicYear) {
+      setSnackbar({
+        open: true,
+        message: 'Vui lòng chọn giáo viên và năm học',
+        severity: 'warning'
+      });
+      return;
+    }
+
+    await generateReportForTeacher(selectedTeacherId, selectedAcademicYear);
   };
 
   const handleExportExcel = async () => {
@@ -175,21 +199,31 @@ const TeacherYearlyReportPage = () => {
           {/* Form chọn giáo viên và năm học */}
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6} md={4} width="30%">
-              <FormControl fullWidth>
-                <InputLabel>Giáo viên</InputLabel>
-                <Select
-                  value={selectedTeacherId}
-                  onChange={(e) => setSelectedTeacherId(e.target.value)}
+              {canViewAllData(user?.role) ? (
+                <FormControl fullWidth>
+                  <InputLabel>Giáo viên</InputLabel>
+                  <Select
+                    value={selectedTeacherId}
+                    onChange={(e) => setSelectedTeacherId(e.target.value)}
+                    label="Giáo viên"
+                    disabled={loading}
+                  >
+                    {teachers.map(teacher => (
+                      <MenuItem key={teacher.id} value={teacher.id}>
+                        {teacher.fullName} ({teacher.code})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              ) : (
+                <TextField
+                  fullWidth
                   label="Giáo viên"
-                  disabled={loading}
-                >
-                  {teachers.map(teacher => (
-                    <MenuItem key={teacher.id} value={teacher.id}>
-                      {teacher.fullName} ({teacher.code})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  value={user?.teacher ? `${user.teacher.fullName} (${user.teacher.code})` : ''}
+                  disabled
+                  variant="outlined"
+                />
+              )}
             </Grid>
             
             <Grid item xs={12} sm={6} md={4}>
@@ -210,16 +244,18 @@ const TeacherYearlyReportPage = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={4}>
-              <Button
-                variant="contained"
-                onClick={handleGenerateReport}
-                disabled={loading || !selectedTeacherId || !selectedAcademicYear}
-                sx={{ height: '56px', width: '100%' }}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Tạo báo cáo'}
-              </Button>
-            </Grid>
+            {canViewAllData(user?.role) && (
+              <Grid item xs={12} sm={6} md={4}>
+                <Button
+                  variant="contained"
+                  onClick={handleGenerateReport}
+                  disabled={loading || !selectedTeacherId || !selectedAcademicYear}
+                  sx={{ height: '56px', width: '100%' }}
+                >
+                  {loading ? <CircularProgress size={24} /> : 'Tạo báo cáo'}
+                </Button>
+              </Grid>
+            )}
           </Grid>
 
           {reportData && (

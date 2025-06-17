@@ -1,6 +1,10 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import MainLayout from './components/layout/MainLayout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import RouteGuard from './components/auth/RouteGuard';
+import LoginPage from './pages/auth/LoginPage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import theme from './theme/theme';
 
 // Các trang quản lý
@@ -28,6 +32,9 @@ import TeacherYearlyReportPage from './pages/reports/TeacherYearlyReportPage';
 import DepartmentReportPage from './pages/reports/DepartmentReportPage';
 import SchoolReportPage from './pages/reports/SchoolReportPage';
 
+// Profile Page
+import ProfilePage from './pages/profile/ProfilePage';
+
 // Import CSS
 import './App.css';
 
@@ -37,170 +44,288 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
+// Protected routes wrapped with ProtectedRoute and RouteGuard
 const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <MainLayout>
-        <StatisticsPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <StatisticsPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/profile',
+    element: (
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <ProfilePage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/degrees',
     element: (
-      <MainLayout>
-        <DegreesPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <DegreesPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/departments',
     element: (
-      <MainLayout>
-        <DepartmentsPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <DepartmentsPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/teachers',
     element: (
-      <MainLayout>
-        <TeachersPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <TeachersPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/subjects',
     element: (
-      <MainLayout>
-        <SubjectsPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <SubjectsPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/semesters',
     element: (
-      <MainLayout>
-        <SemestersPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <SemestersPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/course-classes',
     element: (
-      <MainLayout>
-        <CourseClassesPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <CourseClassesPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/statistics',
     element: (
-      <MainLayout>
-        <StatisticsPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <StatisticsPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   // Course Class Statistics Route
   {
     path: '/course-class-statistics',
     element: (
-      <MainLayout>
-        <CourseClassStatistics />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <CourseClassStatistics />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   // Teacher Assignment Routes
   {
     path: '/teacher-assignments',
     element: (
-      <MainLayout>
-        <TeacherAssignmentList />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <TeacherAssignmentList />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/teacher-assignments/new',
     element: (
-      <MainLayout>
-        <AssignmentForm />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <AssignmentForm />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/teacher-assignments/edit/:id',
     element: (
-      <MainLayout>
-        <AssignmentForm />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <AssignmentForm />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   // Payroll Management Routes - UC3
   {
     path: '/hourly-rates',
     element: (
-      <MainLayout>
-        <HourlyRatesPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <HourlyRatesPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/teacher-coefficients',
     element: (
-      <MainLayout>
-        <TeacherCoefficientsPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <TeacherCoefficientsPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/class-coefficients',
     element: (
-      <MainLayout>
-        <ClassCoefficientsPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <ClassCoefficientsPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/payroll-calculation',
     element: (
-      <MainLayout>
-        <PayrollCalculationPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <PayrollCalculationPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   // Report Routes - UC4
   {
     path: '/reports/teacher-yearly',
     element: (
-      <MainLayout>
-        <TeacherYearlyReportPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <TeacherYearlyReportPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/reports/department',
     element: (
-      <MainLayout>
-        <DepartmentReportPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <DepartmentReportPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/reports/school',
     element: (
-      <MainLayout>
-        <SchoolReportPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <RouteGuard>
+          <MainLayout>
+            <SchoolReportPage />
+          </MainLayout>
+        </RouteGuard>
+      </ProtectedRoute>
     ),
   },
 ]);
+
+// Main App component with authentication logic
+function AuthenticatedApp() {
+  const { isAuthenticated, loading } = useAuth();
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        Đang kiểm tra đăng nhập...
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  // Show main app if authenticated
+  return <RouterProvider router={router} />;
+}
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <AuthenticatedApp />
+      </AuthProvider>
     </ThemeProvider>
   )
 }

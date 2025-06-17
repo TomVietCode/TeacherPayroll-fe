@@ -31,10 +31,13 @@ import {
   Save as SaveIcon
 } from '@mui/icons-material';
 import { SemesterAPI, CourseClassAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { canCreate, canUpdate, canDelete, canViewAllData, ROLES } from '../../utils/permissions';
 import CourseClassFormDialog from '../../components/courseClasses/CourseClassFormDialog';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const CourseClassesPage = () => {
+  const { user } = useAuth();
   const [semesters, setSemesters] = useState([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [selectedSemesterId, setSelectedSemesterId] = useState('');
@@ -130,7 +133,13 @@ const CourseClassesPage = () => {
     setError(null);
     setPendingChanges({}); // Clear pending changes when fetching new data
     try {
-      const response = await CourseClassAPI.getBySemester(selectedSemesterId);
+      let response;
+      // For teachers, only get classes they are assigned to
+      if (user?.role === ROLES.TEACHER && user?.teacher?.id) {
+        response = await CourseClassAPI.getCourseClassesByTeacherAndSemester(user.teacher.id, selectedSemesterId);
+      } else {
+        response = await CourseClassAPI.getBySemester(selectedSemesterId);
+      }
       setCourseClassesBySubject(response.data.data || []);
     } catch (err) {
       console.error('Failed to fetch course classes:', err);
@@ -403,33 +412,68 @@ const CourseClassesPage = () => {
             </Box>
             
             <Grid container spacing={2}>
-              {courseClassesBySubject.map((subjectData) => (
-                <Grid item xs={12} sm={6} md={4} key={subjectData.subject.id}>
-                  <Card 
-                    sx={{ 
-                      cursor: 'pointer',
-                      border: selectedSubject?.id === subjectData.subject.id ? 2 : 1,
-                      borderColor: selectedSubject?.id === subjectData.subject.id ? 'primary.main' : 'divider',
-                      '&:hover': { 
-                        bgcolor: 'action.hover' 
-                      }
-                    }}
-                    onClick={() => handleSubjectSelect(subjectData.subject)}
-                  >
-                    <CardContent>
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {subjectData.subject.code}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {subjectData.subject.name}
-                      </Typography>
-                      <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                        {subjectData.classes.length} lớp
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+              {courseClassesBySubject.map((subjectData, index) => {
+                // Define colors for different subjects
+                const colors = [
+                  '#E3F2FD', '#F3E5F5', '#E8F5E8', '#FFF3E0', '#FCE4EC',
+                  '#E0F2F1', '#F1F8E9', '#FFF8E1', '#E8EAF6', '#FFEBEE'
+                ];
+                const backgroundColor = colors[index % colors.length];
+                
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={subjectData.subject.id}>
+                    <Card 
+                      sx={{ 
+                        cursor: 'pointer',
+                        border: selectedSubject?.id === subjectData.subject.id ? 2 : 1,
+                        borderColor: selectedSubject?.id === subjectData.subject.id ? 'primary.main' : 'divider',
+                        backgroundColor: backgroundColor,
+                        width: 150,
+                        height: 130,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                      }}
+                      onClick={() => handleSubjectSelect(subjectData.subject)}
+                    >
+                      <CardContent sx={{ 
+                        flexGrow: 1,
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                      }}>
+                        <div>
+                          <Typography variant="subtitle1" fontWeight="bold" sx={{ 
+                            fontSize: '0.875rem',
+                            lineHeight: 1.1,
+                            mb: 0.5
+                          }}>
+                            {subjectData.subject.code}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{
+                            fontSize: '0.85rem',
+                            lineHeight: 1.2,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            wordBreak: 'break-word'
+                          }}>
+                            {subjectData.subject.name}
+                          </Typography>
+                        </div>
+                        <Typography variant="caption" sx={{ 
+                          fontSize: '0.8rem',
+                          color: 'text.secondary',
+                          fontWeight: 500,
+                        }}>
+                          {subjectData.classes.length} lớp
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
             </Grid>
           </CardContent>
         </Card>
@@ -444,7 +488,7 @@ const CourseClassesPage = () => {
                 Danh sách lớp học phần: {selectedSubject.name}
               </Typography>
               
-              {hasAnyPendingChanges && (
+              {hasAnyPendingChanges && canUpdate(user?.role) && (
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                   <Chip 
                     label={`${Object.keys(pendingChanges).length} thay đổi`} 
@@ -479,8 +523,9 @@ const CourseClassesPage = () => {
                     <TableCell>Mã lớp</TableCell>
                     <TableCell>Tên lớp</TableCell>
                     <TableCell sx={{ minWidth: 150 }}>Số sinh viên</TableCell>
-                    <TableCell>Giảng viên</TableCell>
-                    <TableCell align="center">Thao tác</TableCell>
+                    {/* Hide teacher column for teachers */}
+                    {user?.role !== ROLES.TEACHER && <TableCell>Giảng viên</TableCell>}
+                    {canDelete(user?.role) && <TableCell align="center">Thao tác</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -497,53 +542,64 @@ const CourseClassesPage = () => {
                         <TableCell>{courseClass.name}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <TextField
-                              size="small"
-                              type="number"
-                              value={getCurrentStudentCount(courseClass)}
-                              onChange={(e) => handleStudentCountChange(courseClass.id, e.target.value)}
-                              inputProps={{ 
-                                min: 0,
-                                max: courseClass.maxStudents || 1000,
-                                style: { width: '60px' }
-                              }}
-                              variant={hasPendingChange(courseClass.id) ? "outlined" : "standard"}
-                              sx={{
-                                '& .MuiInputBase-root': {
-                                  bgcolor: hasPendingChange(courseClass.id) ? 'warning.light' : 'inherit',
-                                }
-                              }}
-                            />
+                            {canUpdate(user?.role) ? (
+                              <TextField
+                                size="small"
+                                type="number"
+                                value={getCurrentStudentCount(courseClass)}
+                                onChange={(e) => handleStudentCountChange(courseClass.id, e.target.value)}
+                                inputProps={{ 
+                                  min: 0,
+                                  max: courseClass.maxStudents || 1000,
+                                  style: { width: '60px' }
+                                }}
+                                variant={hasPendingChange(courseClass.id) ? "outlined" : "standard"}
+                                sx={{
+                                  '& .MuiInputBase-root': {
+                                    bgcolor: hasPendingChange(courseClass.id) ? 'warning.light' : 'inherit',
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <Typography variant="body2" sx={{ minWidth: '60px', textAlign: 'center' }}>
+                                {getCurrentStudentCount(courseClass)}
+                              </Typography>
+                            )}
                             <Typography variant="body2" color="text.secondary">
                               / {courseClass.maxStudents || 40}
                             </Typography>
                           </Box>
                         </TableCell>
-                        <TableCell>
-                          {courseClass.teacher ? (
-                            <Box>
-                              <Typography variant="body2" fontWeight="medium">
-                                {courseClass.teacher.fullName}
+                        {/* Hide teacher column for teachers */}
+                        {user?.role !== ROLES.TEACHER && (
+                          <TableCell>
+                            {courseClass.teacher ? (
+                              <Box>
+                                <Typography variant="body2" fontWeight="medium">
+                                  {courseClass.teacher.fullName}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {courseClass.teacher.code}
+                                </Typography>
+                              </Box>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                                Chưa phân công
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {courseClass.teacher.code}
-                              </Typography>
-                            </Box>
-                          ) : (
-                            <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                              Chưa phân công
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={() => handleDeleteCourseClass(courseClass)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
+                            )}
+                          </TableCell>
+                        )}
+                        {canDelete(user?.role) && (
+                          <TableCell align="center">
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={() => handleDeleteCourseClass(courseClass)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                 </TableBody>
@@ -553,15 +609,17 @@ const CourseClassesPage = () => {
         </Card>
       )}
 
-      {/* Add FAB */}
-      <Fab
-        color="primary"
-        aria-label="add"
-        sx={{ position: 'fixed', bottom: 16, right: 16 }}
-        onClick={handleAddCourseClass}
-      >
-        <AddIcon />
-      </Fab>
+      {/* Add FAB - Only show for users who can create */}
+      {canCreate(user?.role) && (
+        <Fab
+          color="primary"
+          aria-label="add"
+          sx={{ position: 'fixed', bottom: 16, right: 16 }}
+          onClick={handleAddCourseClass}
+        >
+          <AddIcon />
+        </Fab>
+      )}
 
       {/* Form Dialog */}
       <CourseClassFormDialog 
