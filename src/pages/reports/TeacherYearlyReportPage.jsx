@@ -65,25 +65,17 @@ const TeacherYearlyReportPage = () => {
       const uniqueYears = [...new Set(semestersResponse.data.data.map(s => s.academicYear))].sort();
       setAcademicYears(uniqueYears);
       
-      // Chọn năm hiện tại hoặc năm gần nhất
-      const currentYear = new Date().getFullYear();
-      const currentAcademicYear = uniqueYears.find(year => {
-        const startYear = parseInt(year.split('-')[0]);
-        return startYear === currentYear || startYear === currentYear - 1;
-      });
-      
-      if (currentAcademicYear) {
-        setSelectedAcademicYear(currentAcademicYear);
-      } else if (uniqueYears.length > 0) {
-        setSelectedAcademicYear(uniqueYears[uniqueYears.length - 1]); // Năm gần nhất
+      // Auto-select the smallest (earliest) academic year
+      if (uniqueYears.length > 0) {
+        setSelectedAcademicYear(uniqueYears[0]); // Smallest year
       }
 
       // For teachers, auto-select their own teacher and generate report
       if (user?.role === ROLES.TEACHER && user?.teacher?.id) {
         setSelectedTeacherId(user.teacher.id);
         
-        // Auto-generate report for current year if available
-        const yearToUse = currentAcademicYear || (uniqueYears.length > 0 ? uniqueYears[uniqueYears.length - 1] : null);
+        // Auto-generate report for the earliest year if available
+        const yearToUse = uniqueYears.length > 0 ? uniqueYears[0] : null;
         if (yearToUse) {
           // Generate report automatically after state is set
           setTimeout(() => {
@@ -244,18 +236,16 @@ const TeacherYearlyReportPage = () => {
               </FormControl>
             </Grid>
 
-            {canViewAllData(user?.role) && (
-              <Grid item xs={12} sm={6} md={4}>
-                <Button
-                  variant="contained"
-                  onClick={handleGenerateReport}
-                  disabled={loading || !selectedTeacherId || !selectedAcademicYear}
-                  sx={{ height: '56px', width: '100%' }}
-                >
-                  {loading ? <CircularProgress size={24} /> : 'Tạo báo cáo'}
-                </Button>
-              </Grid>
-            )}
+            <Grid item xs={12} sm={6} md={4}>
+              <Button
+                variant="contained"
+                onClick={handleGenerateReport}
+                disabled={loading || !selectedTeacherId || !selectedAcademicYear}
+                sx={{ height: '56px', width: '100%' }}
+              >
+                {loading ? <CircularProgress size={24} /> : 'Tạo báo cáo'}
+              </Button>
+            </Grid>
           </Grid>
 
           {reportData && (

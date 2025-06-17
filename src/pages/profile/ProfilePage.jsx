@@ -131,7 +131,7 @@ const ProfilePage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Thông tin cá nhân
         </Typography>

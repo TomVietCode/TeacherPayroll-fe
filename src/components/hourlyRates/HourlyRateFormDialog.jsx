@@ -45,7 +45,7 @@ function HourlyRateFormDialog({ open, onClose, onSubmit, initialData = null, loa
   const fetchAcademicYears = async () => {
     try {
       const response = await SemesterAPI.getAll();
-      const uniqueYears = [...new Set(response.data.data.map(s => s.academicYear))].sort().reverse();
+      const uniqueYears = [...new Set(response.data.data.map(s => s.academicYear))].sort();
       setAcademicYears(uniqueYears);
     } catch (error) {
       console.error('Failed to fetch academic years:', error);

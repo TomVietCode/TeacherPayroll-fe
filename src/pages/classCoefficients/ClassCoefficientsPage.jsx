@@ -59,11 +59,12 @@ function ClassCoefficientsPage() {
         ClassCoefficientAPI.getValidStudentRanges()
       ]);
       
-      const uniqueYears = [...new Set(semestersResponse.data.data.map(s => s.academicYear))].sort().reverse();
+      // Sort academic years from smallest to largest
+      const uniqueYears = [...new Set(semestersResponse.data.data.map(s => s.academicYear))].sort();
       setAcademicYears(uniqueYears);
       setValidRanges(rangesResponse.data.data || []);
       
-      // Auto-select the latest academic year
+      // Auto-select the smallest (earliest) year
       if (uniqueYears.length > 0) {
         setSelectedAcademicYear(uniqueYears[0]);
       }

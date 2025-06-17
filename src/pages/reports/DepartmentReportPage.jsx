@@ -69,17 +69,9 @@ const DepartmentReportPage = () => {
       const uniqueYears = [...new Set(semestersResponse.data.data.map(s => s.academicYear))].sort();
       setAcademicYears(uniqueYears);
       
-      // Chọn năm hiện tại hoặc năm gần nhất
-      const currentYear = new Date().getFullYear();
-      const currentAcademicYear = uniqueYears.find(year => {
-        const startYear = parseInt(year.split('-')[0]);
-        return startYear === currentYear || startYear === currentYear - 1;
-      });
-      
-      if (currentAcademicYear) {
-        setSelectedAcademicYear(currentAcademicYear);
-      } else if (uniqueYears.length > 0) {
-        setSelectedAcademicYear(uniqueYears[uniqueYears.length - 1]); // Năm gần nhất
+      // Auto-select the smallest (earliest) academic year
+      if (uniqueYears.length > 0) {
+        setSelectedAcademicYear(uniqueYears[0]); // Smallest year
       }
     } catch (error) {
       console.error('Failed to fetch initial data:', error);

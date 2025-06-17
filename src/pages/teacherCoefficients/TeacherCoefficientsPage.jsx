@@ -53,10 +53,11 @@ function TeacherCoefficientsPage() {
   const fetchAcademicYears = async () => {
     try {
       const response = await SemesterAPI.getAll();
-      const uniqueYears = [...new Set(response.data.data.map(s => s.academicYear))].sort().reverse();
+      // Sort academic years from smallest to largest
+      const uniqueYears = [...new Set(response.data.data.map(s => s.academicYear))].sort();
       setAcademicYears(uniqueYears);
       
-      // Auto-select the latest academic year
+      // Auto-select the smallest (earliest) year
       if (uniqueYears.length > 0) {
         setSelectedAcademicYear(uniqueYears[0]);
       }

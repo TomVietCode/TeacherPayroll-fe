@@ -174,8 +174,8 @@ const CourseClassFormDialog = ({
     }
   };
 
-  // Generate academic year options based on semesters
-  const academicYears = [...new Set(semesters.map(s => s.academicYear))].sort().reverse();
+  // Generate academic year options from semesters - sort from smallest to largest
+  const academicYears = [...new Set(semesters.map(s => s.academicYear))].sort();
 
   // Filter semesters by selected academic year
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');

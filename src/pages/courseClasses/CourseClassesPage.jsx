@@ -103,11 +103,18 @@ const CourseClassesPage = () => {
         const semestersList = response.data.data || [];
         setSemesters(semestersList);
         
-        // Auto-select latest semester
-        const closestSemester = findClosestSemester(semestersList);
-        if (closestSemester) {
-          setSelectedAcademicYear(closestSemester.academicYear);
-          setSelectedSemesterId(closestSemester.id);
+        // Auto-select smallest (earliest) academic year
+        const academicYears = [...new Set(semestersList.map(s => s.academicYear))].sort();
+        if (academicYears.length > 0) {
+          const earliestYear = academicYears[0];
+          setSelectedAcademicYear(earliestYear);
+          
+          // Find the closest semester within the earliest year
+          const semestersInEarliestYear = semestersList.filter(s => s.academicYear === earliestYear);
+          const closestSemester = findClosestSemester(semestersInEarliestYear);
+          if (closestSemester) {
+            setSelectedSemesterId(closestSemester.id);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch semesters:', err);
@@ -149,8 +156,8 @@ const CourseClassesPage = () => {
     }
   };
 
-  // Generate academic year options based on semesters
-  const academicYears = [...new Set(semesters.map(s => s.academicYear))].sort().reverse();
+  // Generate academic year options based on semesters - sort from smallest to largest
+  const academicYears = [...new Set(semesters.map(s => s.academicYear))].sort();
 
   // Filter semesters by selected academic year
   const filteredSemesters = selectedAcademicYear 

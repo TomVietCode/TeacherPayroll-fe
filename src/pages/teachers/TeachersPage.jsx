@@ -1,12 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Box, Alert, Snackbar } from '@mui/material';
+import { 
+  Box, 
+  Alert, 
+  Snackbar, 
+  Card, 
+  CardContent, 
+  Typography, 
+  Grid, 
+  TextField, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  Button,
+  InputAdornment
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  FilterList as FilterIcon,
+  Clear as ClearIcon
+} from '@mui/icons-material';
 import CustomTable from '../../components/common/CustomTable';
-import { TeacherAPI } from '../../services/api';
+import { TeacherAPI, DepartmentAPI, DegreeAPI } from '../../services/api';
 import TeacherFormDialog from '../../components/teachers/TeacherFormDialog';
 import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const TeachersPage = () => {
   const [teachers, setTeachers] = useState([]);
+  const [filteredTeachers, setFilteredTeachers] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [degrees, setDegrees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -19,12 +42,21 @@ const TeachersPage = () => {
     severity: 'success'
   });
 
+  // Filter states
+  const [filters, setFilters] = useState({
+    search: '',
+    departmentId: '',
+    degreeId: ''
+  });
+
   const fetchTeachers = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await TeacherAPI.getAll();
-      setTeachers(response.data.data || []);
+      const teacherData = response.data.data || [];
+      setTeachers(teacherData);
+      setFilteredTeachers(teacherData);
     } catch (err) {
       console.error('Failed to fetch teachers:', err);
       setError('Không thể tải dữ liệu giáo viên. Vui lòng thử lại sau.');
@@ -33,13 +65,71 @@ const TeachersPage = () => {
     }
   };
 
+  const fetchFilterOptions = async () => {
+    try {
+      const [departmentsRes, degreesRes] = await Promise.all([
+        DepartmentAPI.getAll(),
+        DegreeAPI.getAll()
+      ]);
+      
+      setDepartments(departmentsRes.data.data || []);
+      setDegrees(degreesRes.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch filter options:', err);
+    }
+  };
+
   useEffect(() => {
     fetchTeachers();
+    fetchFilterOptions();
   }, []);
+
+  // Apply filters whenever filters or teachers change
+  useEffect(() => {
+    let filtered = teachers;
+
+    // Apply search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(teacher => 
+        teacher.fullName.toLowerCase().includes(searchLower) ||
+        teacher.code.toLowerCase().includes(searchLower) ||
+        (teacher.email && teacher.email.toLowerCase().includes(searchLower)) ||
+        (teacher.phone && teacher.phone.includes(filters.search))
+      );
+    }
+
+    // Apply department filter
+    if (filters.departmentId) {
+      filtered = filtered.filter(teacher => teacher.departmentId === filters.departmentId);
+    }
+
+    // Apply degree filter
+    if (filters.degreeId) {
+      filtered = filtered.filter(teacher => teacher.degreeId === filters.degreeId);
+    }
+
+    setFilteredTeachers(filtered);
+  }, [teachers, filters]);
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      departmentId: '',
+      degreeId: ''
+    });
+  };
 
   const columns = [
     { id: 'code', label: 'Mã GV', width: '15%' },
-    { id: 'fullName', label: 'Họ và tên', width: '30%' },
+    { id: 'fullName', label: 'Họ và tên', width: '25%' },
     { 
       id: 'dateOfBirth', 
       label: 'Ngày sinh',
@@ -49,13 +139,13 @@ const TeachersPage = () => {
     { 
       id: 'department',
       label: 'Khoa',
-      width: '20%',
+      width: '15%',
       render: (row) => row.department?.shortName || 'N/A'
     },
     { 
       id: 'degree',
       label: 'Bằng cấp',
-      width: '20%',
+      width: '15%',
       render: (row) => row.degree?.fullName || 'N/A'
     }
   ];
@@ -146,16 +236,88 @@ const TeachersPage = () => {
   };
 
   return (
-    <Box sx={{ height: '100%', width: '100%' }}>
+    <Box sx={{ height: '100%', width: '100%', p: 3 }}>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
+      {/* Filters */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            <FilterIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            Bộ lọc và tìm kiếm
+          </Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                label="Tìm kiếm"
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                placeholder="Tìm kiếm giáo viên"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3} width={"20%"}>
+              <FormControl fullWidth>
+                <InputLabel>Khoa</InputLabel>
+                <Select
+                  value={filters.departmentId}
+                  onChange={(e) => handleFilterChange('departmentId', e.target.value)}
+                  label="Khoa"
+                >
+                  <MenuItem value="">Tất cả khoa</MenuItem>
+                  {departments.map((dept) => (
+                    <MenuItem key={dept.id} value={dept.id}>
+                      {dept.fullName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3} width={"20%"}>
+              <FormControl fullWidth>
+                <InputLabel>Bằng cấp</InputLabel>
+                <Select
+                  value={filters.degreeId}
+                  onChange={(e) => handleFilterChange('degreeId', e.target.value)}
+                  label="Bằng cấp"
+                >
+                  <MenuItem value="">Tất cả bằng cấp</MenuItem>
+                  {degrees.map((degree) => (
+                    <MenuItem key={degree.id} value={degree.id}>
+                      {degree.fullName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <Button
+                variant="outlined"
+                onClick={clearFilters}
+                startIcon={<ClearIcon />}
+                fullWidth
+              >
+                Xóa bộ lọc
+              </Button>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
       <CustomTable
         columns={columns}
-        data={teachers}
+        data={filteredTeachers}
         loading={loading}
         onAdd={handleAddTeacher}
         onEdit={handleEditTeacher}
