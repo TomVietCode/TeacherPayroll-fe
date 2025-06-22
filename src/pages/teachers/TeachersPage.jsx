@@ -274,6 +274,13 @@ const TeachersPage = () => {
                   value={filters.departmentId}
                   onChange={(e) => handleFilterChange('departmentId', e.target.value)}
                   label="Khoa"
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   <MenuItem value="">Tất cả khoa</MenuItem>
                   {departments.map((dept) => (

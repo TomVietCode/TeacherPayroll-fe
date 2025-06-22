@@ -252,16 +252,13 @@ const BulkAssignment = ({ onSuccess }) => {
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" component="h2" gutterBottom>
           <AssignmentIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Phân công giáo viên
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Phân công một giáo viên cho nhiều lớp được chọn
+          Phân công 
         </Typography>
       </Box>
 
       <Grid container spacing={3}>
         {/* Left Panel - Teacher Selection & Settings */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={4} width={"30%"}>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -275,6 +272,13 @@ const BulkAssignment = ({ onSuccess }) => {
                   value={selectedTeacher}
                   onChange={(e) => setSelectedTeacher(e.target.value)}
                   label="Chọn giáo viên"
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   {teachers.map((teacher) => (
                     <MenuItem key={teacher.id} value={teacher.id}>
@@ -348,7 +352,7 @@ const BulkAssignment = ({ onSuccess }) => {
         </Grid>
 
         {/* Right Panel - Class Selection */}
-        <Grid item xs={12} md={8} width={"70%"}>
+        <Grid item xs={12} md={8} width={"60%"}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -399,11 +403,18 @@ const BulkAssignment = ({ onSuccess }) => {
                       value={filters.semesterId}
                       onChange={(e) => handleFilterChange('semesterId', e.target.value)}
                       label="Kỳ học"
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="">Tất cả kỳ học</MenuItem>
                       {semesters.map((semester) => (
                         <MenuItem key={semester.id} value={semester.id}>
-                          {semester.academicYear} - Kỳ {semester.termNumber}
+                          HK{semester.termNumber}{semester.isSupplementary && "(P)"}-{semester.academicYear} 
                         </MenuItem>
                       ))}
                     </Select>
@@ -416,6 +427,13 @@ const BulkAssignment = ({ onSuccess }) => {
                       value={filters.departmentId}
                       onChange={(e) => handleFilterChange('departmentId', e.target.value)}
                       label="Khoa"
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="">Tất cả khoa</MenuItem>
                       {departments.map((dept) => (
@@ -485,7 +503,7 @@ const BulkAssignment = ({ onSuccess }) => {
                               Học phần: {courseClass.subject?.name} ({courseClass.subject?.credits} tín chỉ)
                             </Typography>
                             <Typography variant="caption" display="block">
-                              Kỳ học: {courseClass.semester?.academicYear} - Kỳ {courseClass.semester?.termNumber}
+                              Kỳ học: {courseClass.semester?.academicYear} - HK{courseClass.semester?.termNumber}
                             </Typography>
                             <Typography variant="caption" display="block">
                               Khoa: {courseClass.subject?.department?.shortName} | 

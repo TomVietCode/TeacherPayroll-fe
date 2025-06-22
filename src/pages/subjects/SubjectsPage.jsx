@@ -1,5 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Box, Alert, Snackbar } from '@mui/material';
+import { 
+  Box, 
+  Alert, 
+  Snackbar, 
+  Card, 
+  CardContent, 
+  Typography, 
+  Grid, 
+  TextField, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  Button,
+  InputAdornment
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  FilterList as FilterIcon,
+  Clear as ClearIcon
+} from '@mui/icons-material';
 import CustomTable from '../../components/common/CustomTable';
 import { SubjectAPI, DepartmentAPI } from '../../services/api';
 import SubjectFormDialog from '../../components/subjects/SubjectFormDialog';
@@ -7,6 +27,7 @@ import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const SubjectsPage = () => {
   const [subjects, setSubjects] = useState([]);
+  const [filteredSubjects, setFilteredSubjects] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -20,12 +41,20 @@ const SubjectsPage = () => {
     severity: 'success'
   });
 
+  // Filter states
+  const [filters, setFilters] = useState({
+    search: '',
+    departmentId: ''
+  });
+
   const fetchSubjects = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await SubjectAPI.getAll();
-      setSubjects(response.data.data || []);
+      const subjectData = response.data.data || [];
+      setSubjects(subjectData);
+      setFilteredSubjects(subjectData);
     } catch (err) {
       console.error('Failed to fetch subjects:', err);
       setError('Không thể tải dữ liệu học phần. Vui lòng thử lại sau.');
@@ -47,6 +76,43 @@ const SubjectsPage = () => {
     fetchSubjects();
     fetchDepartments();
   }, []);
+
+  // Apply filters whenever filters or subjects change
+  useEffect(() => {
+    let filtered = subjects;
+
+    // Apply search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(subject => 
+        subject.name.toLowerCase().includes(searchLower) ||
+        subject.code.toLowerCase().includes(searchLower) ||
+        (subject.department?.fullName && subject.department.fullName.toLowerCase().includes(searchLower)) ||
+        (subject.department?.shortName && subject.department.shortName.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply department filter
+    if (filters.departmentId) {
+      filtered = filtered.filter(subject => subject.departmentId === filters.departmentId);
+    }
+
+    setFilteredSubjects(filtered);
+  }, [subjects, filters]);
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      departmentId: ''
+    });
+  };
 
   const columns = [
     { id: 'code', label: 'Mã', width: '15%' },
@@ -156,9 +222,77 @@ const SubjectsPage = () => {
         </Alert>
       )}
 
+      {/* Filters */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            <FilterIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            Bộ lọc và tìm kiếm
+          </Typography>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                label="Tìm kiếm"
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                placeholder="Tìm kiếm học phần..."
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3} width="25%">
+              <FormControl fullWidth>
+                <InputLabel>Khoa</InputLabel>
+                <Select
+                  value={filters.departmentId}
+                  onChange={(e) => handleFilterChange('departmentId', e.target.value)}
+                  label="Khoa"
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
+                >
+                  <MenuItem value="">Tất cả khoa</MenuItem>
+                  {departments.map((dept) => (
+                    <MenuItem key={dept.id} value={dept.id}>
+                      {dept.fullName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <Button
+                variant="outlined"
+                onClick={clearFilters}
+                startIcon={<ClearIcon />}
+                disabled={!filters.search && !filters.departmentId}
+                fullWidth
+              >
+                Xóa bộ lọc
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <Typography variant="body2" color="text.secondary">
+                Hiển thị {filteredSubjects.length} / {subjects.length} học phần
+              </Typography>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
       <CustomTable
         columns={columns}
-        data={subjects}
+        data={filteredSubjects}
         loading={loading}
         onAdd={handleAddSubject}
         onEdit={handleEditSubject}

@@ -171,14 +171,6 @@ const DepartmentReportPage = () => {
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={fetchInitialData}
-                disabled={loading}
-              >
-                Làm mới
-              </Button>
               {reportData && (
                 <Button
                   variant="outlined"
@@ -208,6 +200,13 @@ const DepartmentReportPage = () => {
                   onChange={(e) => setSelectedDepartmentId(e.target.value)}
                   label="Khoa"
                   disabled={loading}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   {departments.map(department => (
                     <MenuItem key={department.id} value={department.id}>
@@ -226,6 +225,13 @@ const DepartmentReportPage = () => {
                   onChange={(e) => setSelectedAcademicYear(e.target.value)}
                   label="Năm học"
                   disabled={loading}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   {academicYears.map(year => (
                     <MenuItem key={year} value={year}>
@@ -256,7 +262,7 @@ const DepartmentReportPage = () => {
                   <MenuItem value="">Tất cả các kỳ</MenuItem>
                   {semesters.map(semester => (
                     <MenuItem key={semester.id} value={semester.id}>
-                      Kỳ {semester.termNumber}{semester.isSupplementary ? ' (Phụ)' : ''}
+                      HK{semester.termNumber}{semester.isSupplementary ? ' (Phụ)' : ''}
                     </MenuItem>
                   ))}
                 </Select>

@@ -478,6 +478,13 @@ const CourseClassesPage = () => {
                   onChange={handleDepartmentChange}
                   label="Khoa"
                   disabled={!selectedSemesterId}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   <MenuItem value="">
                     <em>Tất cả khoa</em>

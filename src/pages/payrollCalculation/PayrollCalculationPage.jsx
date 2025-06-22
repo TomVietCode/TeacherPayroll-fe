@@ -78,7 +78,6 @@ function PayrollCalculationPage() {
       
       setAcademicYears(academicYearsResponse.data.data || []);
       setTeachers(teachersResponse.data.data || []);
-
       // For teachers, auto-select their own teacher
       if (user?.role === ROLES.TEACHER && user?.teacher) {
         const teacherData = teachersResponse.data.data?.find(t => t.id === user.teacher.id);
@@ -153,7 +152,7 @@ function PayrollCalculationPage() {
 
   const getSemesterDisplayName = (semester) => {
     const termText = semester.isSupplementary ? `${semester.termNumber} (phụ)` : semester.termNumber;
-    return `Kỳ ${termText}`;
+    return `HK${termText}`;
   };
 
   if (loading) {
@@ -163,7 +162,6 @@ function PayrollCalculationPage() {
       </Box>
     );
   }
-
   return (
     <Box sx={{ width: '100%' }}>
       <Card>
@@ -187,7 +185,6 @@ function PayrollCalculationPage() {
               <Typography variant="h6" gutterBottom>
                 Chọn thông tin tính toán
               </Typography>
-              
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={6} md={4} width={"12%"}>
                   <FormControl fullWidth required>
@@ -197,6 +194,13 @@ function PayrollCalculationPage() {
                       onChange={(e) => setSelectedAcademicYear(e.target.value)}
                       label="Năm học"
                       disabled={calculating}
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
                     >
                       {academicYears.map(year => (
                         <MenuItem key={year} value={year}>

@@ -161,14 +161,6 @@ const TeacherYearlyReportPage = () => {
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={fetchInitialData}
-                disabled={loading}
-              >
-                Làm mới
-              </Button>
               {reportData && (
                 <Button
                   variant="outlined"
@@ -226,6 +218,13 @@ const TeacherYearlyReportPage = () => {
                   onChange={(e) => setSelectedAcademicYear(e.target.value)}
                   label="Năm học"
                   disabled={loading}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   {academicYears.map(year => (
                     <MenuItem key={year} value={year}>

@@ -154,12 +154,10 @@ const TeacherAssignmentList = () => {
       const teachersData = teachersRes.data?.data || teachersRes.data;
       const departmentsData = departmentsRes.data?.data || departmentsRes.data;
       const semestersData = semestersRes.data?.data || semestersRes.data;
-
       // Ensure all data is arrays
       setTeachers(Array.isArray(teachersData) ? teachersData : []);
       setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
       setSemesters(Array.isArray(semestersData) ? semestersData : []);
-
       // For teachers, auto-set their own teacher ID in filters
       if (user?.role === ROLES.TEACHER && user?.teacher?.id) {
         setFilters(prev => ({
@@ -258,6 +256,13 @@ const TeacherAssignmentList = () => {
                       value={filters.teacherId}
                       onChange={(e) => handleFilterChange('teacherId', e.target.value)}
                       label="Giáo viên"
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="">Tất cả giáo viên</MenuItem>
                       {teachers.map((teacher) => (
@@ -268,18 +273,25 @@ const TeacherAssignmentList = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={2.5} width={"15%"}>
+                <Grid item xs={12} sm={6} md={2.5} width={"25%"}>
                   <FormControl fullWidth>
                     <InputLabel>Khoa</InputLabel>
                     <Select
                       value={filters.departmentId}
                       onChange={(e) => handleFilterChange('departmentId', e.target.value)}
                       label="Khoa"
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="">Tất cả khoa</MenuItem>
                       {departments.map((dept) => (
                         <MenuItem key={dept.id} value={dept.id}>
-                          {dept.shortName}
+                          {dept.fullName}
                         </MenuItem>
                       ))}
                     </Select>
@@ -292,11 +304,18 @@ const TeacherAssignmentList = () => {
                       value={filters.semesterId}
                       onChange={(e) => handleFilterChange('semesterId', e.target.value)}
                       label="Kỳ học"
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="">Tất cả kỳ học</MenuItem>
                       {semesters.map((semester) => (
                         <MenuItem key={semester.id} value={semester.id}>
-                          {semester.academicYear} - Kỳ {semester.termNumber}
+                          HK{semester.termNumber}{semester.isSupplementary && "(P)"}-{semester.academicYear} 
                         </MenuItem>
                       ))}
                     </Select>
@@ -391,7 +410,7 @@ const TeacherAssignmentList = () => {
                         {assignment.courseClass?.semester?.academicYear}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Kỳ {assignment.courseClass?.semester?.termNumber}
+                        HK{assignment.courseClass?.semester?.termNumber}
                       </Typography>
                     </TableCell>
                     <TableCell>

@@ -266,7 +266,7 @@ const AssignmentForm = () => {
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 Học phần: {option.subject?.name} | 
-                                Kỳ học: {option.semester?.academicYear} Kỳ {option.semester?.termNumber} |
+                                Kỳ học: {option.semester?.academicYear} HK{option.semester?.termNumber} |
                                 Sinh viên: {option.studentCount}
                               </Typography>
                             </Box>
@@ -324,7 +324,7 @@ const AssignmentForm = () => {
                         Sinh viên: {getSelectedCourseClass()?.studentCount}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" display="block">
-                        Kỳ học: {getSelectedCourseClass()?.semester?.academicYear} Kỳ {getSelectedCourseClass()?.semester?.termNumber}
+                        Kỳ học: {getSelectedCourseClass()?.semester?.academicYear} HK{getSelectedCourseClass()?.semester?.termNumber}
                       </Typography>
                     </Box>
                   )}

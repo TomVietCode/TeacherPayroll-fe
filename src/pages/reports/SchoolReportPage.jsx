@@ -162,14 +162,6 @@ const SchoolReportPage = () => {
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={fetchInitialData}
-                disabled={loading}
-              >
-                Làm mới
-              </Button>
               {reportData && (
                 <Button
                   variant="outlined"
@@ -198,6 +190,13 @@ const SchoolReportPage = () => {
                   onChange={(e) => setSelectedAcademicYear(e.target.value)}
                   label="Năm học"
                   disabled={loading}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   {academicYears.map(year => (
                     <MenuItem key={year} value={year}>
@@ -222,13 +221,14 @@ const SchoolReportPage = () => {
                       return 'Tất cả các kỳ';
                     }
                     const semester = semesters.find(s => s.id === selected);
-                    return semester ? `Kỳ ${semester.termNumber}${semester.isSupplementary ? ' (Phụ)' : ''}` : '';
+                    return semester ? `HK${semester.termNumber}${semester.isSupplementary ? ' (Phụ)' : ''}` : '';
                   }}
+                  
                 >
                   <MenuItem value="">Tất cả các kỳ</MenuItem>
                   {semesters.map(semester => (
                     <MenuItem key={semester.id} value={semester.id}>
-                      Kỳ {semester.termNumber}{semester.isSupplementary ? ' (Phụ)' : ''}
+                      HK{semester.termNumber}{semester.isSupplementary ? ' (Phụ)' : ''}
                     </MenuItem>
                   ))}
                 </Select>
@@ -298,7 +298,7 @@ const SchoolReportPage = () => {
                 </Grid>
               </Grid>
 
-              {/* Thông tin tổng quan và hệ số cùng 1 hàng */}
+              {/* Thông tin tổng quan và hệ số */}
               <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} md={6}>
                   <Paper variant="outlined" sx={{ p: 3, height: '100%' }}>
@@ -388,7 +388,7 @@ const SchoolReportPage = () => {
                           </TableCell>
                           <TableCell align="right">
                             <Chip 
-                              label={`${percentage}%`}
+                              label={`${isNaN(percentage) ? '0' : percentage}%`}
                               size="small"
                               color={percentage > 20 ? "success" : percentage > 10 ? "warning" : "default"}
                             />
