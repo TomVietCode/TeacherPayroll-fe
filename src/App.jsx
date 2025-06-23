@@ -47,6 +47,10 @@ import '@fontsource/roboto/700.css';
 // Protected routes wrapped with ProtectedRoute and RouteGuard
 const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <LoginPage />
+  },
+  {
     path: '/',
     element: (
       <ProtectedRoute>
@@ -310,12 +314,7 @@ function AuthenticatedApp() {
     );
   }
 
-  // Show login page if not authenticated
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
-  // Show main app if authenticated
+  // Always show the router - authentication will be handled by RouteGuard
   return <RouterProvider router={router} />;
 }
 

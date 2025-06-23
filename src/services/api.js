@@ -146,20 +146,37 @@ export const PayrollAPI = {
 // Report API endpoints - UC4
 export const ReportAPI = {
   // UC4.1: Báo cáo tiền dạy của giáo viên trong một năm
-  getTeacherYearlyReport: (teacherId, academicYear) => 
-    api.get(`/reports/teacher/${teacherId}/academic-year/${academicYear}`),
+  getTeacherYearlyReport: (teacherId, academicYear) => api.get(`/reports/teacher/${teacherId}/yearly/${academicYear}`),
   
   // UC4.2: Báo cáo tiền dạy của giáo viên một khoa
-  getDepartmentReport: (departmentId, academicYear, semesterId = null) => 
-    api.get(`/reports/department/${departmentId}/academic-year/${academicYear}`, {
-      params: semesterId ? { semesterId } : {}
-    }),
+  getDepartmentReport: (departmentId, academicYear, semesterId) => {
+    const params = semesterId ? { semesterId } : {};
+    return api.get(`/reports/department/${departmentId}/yearly/${academicYear}`, { params });
+  },
   
   // UC4.3: Báo cáo tiền dạy của giáo viên toàn trường
-  getSchoolReport: (academicYear, semesterId = null) => 
-    api.get(`/reports/school/academic-year/${academicYear}`, {
-      params: semesterId ? { semesterId } : {}
-    }),
+  getSchoolReport: (academicYear, semesterId) => {
+    const params = semesterId ? { semesterId } : {};
+    return api.get(`/reports/school/yearly/${academicYear}`, { params });
+  },
+  
+  // Excel export endpoints
+  exportTeacherYearlyReport: (teacherId, academicYear) => 
+    api.get(`/reports/teacher/${teacherId}/yearly/${academicYear}/export`, { responseType: 'blob' }),
+  exportDepartmentReport: (departmentId, academicYear, semesterId) => {
+    const params = semesterId ? { semesterId } : {};
+    return api.get(`/reports/department/${departmentId}/yearly/${academicYear}/export`, { 
+      params, 
+      responseType: 'blob' 
+    });
+  },
+  exportSchoolReport: (academicYear, semesterId) => {
+    const params = semesterId ? { semesterId } : {};
+    return api.get(`/reports/school/yearly/${academicYear}/export`, { 
+      params, 
+      responseType: 'blob' 
+    });
+  }
 };
 
 export default api;

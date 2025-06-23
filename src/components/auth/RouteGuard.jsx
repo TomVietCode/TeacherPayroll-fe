@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { canAccessPage } from '../../utils/permissions';
 import { Box, Typography, Paper, Button } from '@mui/material';
@@ -7,6 +7,7 @@ import { Lock as LockIcon, Home as HomeIcon } from '@mui/icons-material';
 const RouteGuard = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
@@ -53,10 +54,10 @@ const RouteGuard = ({ children }) => {
           <Button
             variant="contained"
             startIcon={<HomeIcon />}
-            onClick={() => window.location.href = '/'}
+            onClick={() => navigate('/profile', { replace: true })}
             size="large"
           >
-            Về trang chủ
+            Quay về trang cá nhân
           </Button>
         </Paper>
       </Box>

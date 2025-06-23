@@ -130,14 +130,46 @@ const TeacherYearlyReportPage = () => {
   };
 
   const handleExportExcel = async () => {
-    if (!reportData) return;
+    if (!reportData || !selectedTeacherId || !selectedAcademicYear) return;
     
-    // TODO: Implement Excel export functionality
-    setSnackbar({
-      open: true,
-      message: 'Chức năng xuất Excel sẽ được bổ sung sau',
-      severity: 'info'
-    });
+    try {
+      setLoading(true);
+      const response = await ReportAPI.exportTeacherYearlyReport(selectedTeacherId, selectedAcademicYear);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from response headers or create default
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = `bao-cao-tien-day-giao-vien-${reportData.teacher.code}-${selectedAcademicYear}.xlsx`;
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (fileNameMatch) fileName = fileNameMatch[1];
+      }
+      
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      setSnackbar({
+        open: true,
+        message: 'Xuất Excel thành công! File đã được tải về.',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Error exporting Excel:', err);
+      setSnackbar({
+        open: true,
+        message: 'Không thể xuất file Excel. Vui lòng thử lại sau.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatCurrency = (amount) => {

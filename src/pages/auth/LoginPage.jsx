@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -34,6 +35,7 @@ const ROLES = [
 
 const LoginPage = () => {
   const { login, loading, error } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -103,7 +105,10 @@ const LoginPage = () => {
     // Attempt login
     const result = await login(formData);
     
-    if (!result.success) {
+    if (result.success) {
+      // Redirect to profile page after successful login
+      navigate('/profile', { replace: true });
+    } else {
       setLoginError(result.error);
     }
   };
