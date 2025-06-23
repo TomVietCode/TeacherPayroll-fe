@@ -19,7 +19,6 @@ const CustomTable = ({
 
   // Ensure data is always an array
   const safeData = Array.isArray(data) ? data : [];
-
   useEffect(() => {
     setPage(1);
   }, [safeData.length]);
@@ -227,7 +226,6 @@ const CustomTable = ({
           </Box>
         </Box>
       </Box>
-      
       {pagination && safeData.length > 0 && (
         <Box 
           sx={{ 

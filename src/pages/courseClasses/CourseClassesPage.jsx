@@ -115,6 +115,11 @@ const CourseClassesPage = () => {
         setSemesters(semestersList);
         setDepartments(departmentsResponse.data.data || []);
         
+        // If user is a teacher, auto-select their department
+        if (user?.role === ROLES.TEACHER && user?.teacher?.departmentId) {
+          setSelectedDepartment(user.teacher.departmentId);
+        }
+        
         // Auto-select smallest (earliest) academic year
         const academicYears = [...new Set(semestersList.map(s => s.academicYear))].sort();
         if (academicYears.length > 0) {
@@ -135,7 +140,7 @@ const CourseClassesPage = () => {
     };
 
     fetchInitialData();
-  }, []);
+  }, [user]);
 
   // Fetch course classes when semester is selected
   useEffect(() => {
@@ -402,7 +407,7 @@ const CourseClassesPage = () => {
         </Alert>
       )}
 
-      {/* Quản lý lớp học phần - Gộp Selection Controls và Filters */}
+      {/* Quản lý lớp học phần */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
@@ -411,6 +416,16 @@ const CourseClassesPage = () => {
                 <FilterIcon />
                 Quản lý lớp học phần
               </Typography>
+              {/* Show department info for teachers */}
+              {user?.role === ROLES.TEACHER && user?.teacher?.department && (
+                <Chip 
+                  label={`Khoa: ${user.teacher.department.fullName}`}
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+              )}
             </Box>
             {canCreate(user?.role) && selectedSemesterId && (
               <Button
@@ -463,42 +478,45 @@ const CourseClassesPage = () => {
                 >
                   {filteredSemesters.map(semester => (
                     <MenuItem key={semester.id} value={semester.id}>
-                      {semester.displayName || `${semester.termNumber}${semester.isSupplementary ? '-phụ' : ''}`}
+                      HK{`${semester.termNumber}${semester.isSupplementary ? '(Phụ)' : ''}`}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={4} md={3} lg={2.5} width={'25%'}>
-              <FormControl fullWidth size="medium">
-                <InputLabel>Khoa</InputLabel>
-                <Select
-                  value={selectedDepartment}
-                  onChange={handleDepartmentChange}
-                  label="Khoa"
-                  disabled={!selectedSemesterId}
-                  MenuProps={{
-                    PaperProps: {
-                      style: {
-                        maxHeight: 200
+            {/* Only show department filter if user is not a teacher */}
+            {user?.role !== ROLES.TEACHER && (
+              <Grid item xs={12} sm={4} md={3} lg={2.5} width={'25%'}>
+                <FormControl fullWidth size="medium">
+                  <InputLabel>Khoa</InputLabel>
+                  <Select
+                    value={selectedDepartment}
+                    onChange={handleDepartmentChange}
+                    label="Khoa"
+                    disabled={!selectedSemesterId}
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 200
+                        }
                       }
-                    }
-                  }}
-                >
-                  <MenuItem value="">
-                    <em>Tất cả khoa</em>
-                  </MenuItem>
-                  {departments.map(dept => (
-                    <MenuItem key={dept.id} value={dept.id}>
-                      {dept.fullName}
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Tất cả khoa</em>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+                    {departments.map(dept => (
+                      <MenuItem key={dept.id} value={dept.id}>
+                        {dept.fullName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-            <Grid item xs={12} md={4} lg={5} width={'30%'}>
+            <Grid item xs={12} md={user?.role === ROLES.TEACHER ? 7 : 4} lg={user?.role === ROLES.TEACHER ? 7.5 : 5} width={'30%'}>
               <TextField
                 fullWidth
                 size="medium"

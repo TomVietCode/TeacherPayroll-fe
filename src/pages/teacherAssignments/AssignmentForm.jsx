@@ -162,7 +162,19 @@ const AssignmentForm = () => {
         navigate('/teacher-assignments');
       }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || `Không thể ${isEditing ? 'cập nhật' : 'tạo'} phân công`);
+      const errorMessage = err.response?.data?.message || `Không thể ${isEditing ? 'cập nhật' : 'tạo'} phân công`;
+      
+      // Handle specific error cases
+      if (err.response?.status === 409) {
+        if (errorMessage.includes('already assigned to')) {
+          setError(errorMessage);
+        } else {
+          setError('Lớp học phần này đã được phân công cho giáo viên khác. Vui lòng chọn lớp khác.');
+        }
+      } else {
+        setError(errorMessage);
+      }
+      
       console.error('Error saving assignment:', err);
     } finally {
       setSaving(false);

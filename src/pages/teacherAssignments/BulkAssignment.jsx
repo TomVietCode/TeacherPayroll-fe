@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -72,6 +72,9 @@ const BulkAssignment = ({ onSuccess }) => {
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [assignmentResult, setAssignmentResult] = useState(null);
 
+  // Ref to prevent effect on first render
+  const isFirstTeacherChange = useRef(true);
+
   // Load initial data
   useEffect(() => {
     loadInitialData();
@@ -81,6 +84,25 @@ const BulkAssignment = ({ onSuccess }) => {
   useEffect(() => {
     loadCourseClasses();
   }, [filters]);
+
+  // Khi chọn giáo viên, tự động đổi khoa
+  useEffect(() => {
+    // Bỏ qua lần render đầu tiên
+    if (isFirstTeacherChange.current) {
+      isFirstTeacherChange.current = false;
+      return;
+    }
+    if (selectedTeacher) {
+      const teacher = teachers.find(t => t.id === selectedTeacher);
+      if (teacher && teacher.departmentId) {
+        setFilters(prev => ({
+          ...prev,
+          departmentId: teacher.departmentId
+        }));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTeacher]);
 
   const loadInitialData = async () => {
     try {
@@ -142,10 +164,10 @@ const BulkAssignment = ({ onSuccess }) => {
 
         setCourseClasses(classes);
       } else {
-        // Use regular course classes endpoint
+        // Use all classes endpoint (includes both assigned and unassigned)
         const params = {
           semesterId: filters.semesterId,
-          search: filters.search,
+          departmentId: filters.departmentId,
         };
 
         // Remove empty params
@@ -153,14 +175,17 @@ const BulkAssignment = ({ onSuccess }) => {
           if (!params[key]) delete params[key];
         });
 
-        const response = await CourseClassAPI.getAll(params);
+        const response = await TeacherAssignmentAPI.getAllClassesForAssignment(params);
         // Fix: handle nested data structure
         let classes = Array.isArray(response.data?.data) ? response.data.data : (Array.isArray(response.data) ? response.data : []);
 
-        // Apply department filter on frontend if needed
-        if (filters.departmentId) {
+        // Apply search filter on frontend
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
           classes = classes.filter(cls => 
-            cls.subject?.departmentId === filters.departmentId
+            cls.name.toLowerCase().includes(searchLower) ||
+            cls.code.toLowerCase().includes(searchLower) ||
+            cls.subject?.name.toLowerCase().includes(searchLower)
           );
         }
 
@@ -194,11 +219,19 @@ const BulkAssignment = ({ onSuccess }) => {
   };
 
   const handleSelectAll = () => {
-    if (selectedClasses.length === courseClasses.length) {
+    const allClassIds = courseClasses.map(cls => cls.id);
+    
+    if (selectedClasses.length === allClassIds.length) {
       setSelectedClasses([]);
     } else {
-      setSelectedClasses(courseClasses.map(cls => cls.id));
+      setSelectedClasses(allClassIds);
     }
+  };
+
+  const handleTeacherChange = (e) => {
+    const teacherId = e.target.value;
+    setSelectedTeacher(teacherId);
+    // Không cần setFilters ở đây vì đã có useEffect ở trên xử lý
   };
 
   const handleBulkAssignment = async () => {
@@ -226,7 +259,19 @@ const BulkAssignment = ({ onSuccess }) => {
         }, 2000);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Không thể thực hiện phân công');
+      const errorData = err.response?.data;
+      
+      if (err.response?.status === 409 && errorData?.conflictClasses) {
+        // Handle conflict errors with detailed information
+        const conflictList = errorData.conflictClasses
+          .map(cls => `• ${cls.name} (đã phân cho: ${cls.currentTeacher})`)
+          .join('\n');
+        
+        setError(`${errorData.message}:\n\n${conflictList}\n\nVui lòng bỏ chọn các lớp đã được phân công và thử lại.`);
+      } else {
+        setError(errorData?.message || 'Không thể thực hiện phân công');
+      }
+      
       console.error('Error executing bulk assignment:', err);
     } finally {
       setLoading(false);
@@ -242,8 +287,35 @@ const BulkAssignment = ({ onSuccess }) => {
     return courseClasses.filter(cls => selectedClasses.includes(cls.id));
   };
 
+  const getAssignmentChanges = () => {
+    const selectedClassObjects = getSelectedClassesInfo();
+    const newAssignments = selectedClassObjects.filter(cls => !cls.assignments || cls.assignments.length === 0);
+    const reassignments = selectedClassObjects.filter(cls => cls.assignments && cls.assignments.length > 0);
+    
+    return {
+      newAssignments,
+      reassignments,
+      total: selectedClassObjects.length
+    };
+  };
+
   const canExecuteAssignment = () => {
     return selectedTeacher && selectedClasses.length > 0;
+  };
+
+  const handleRefresh = () => {
+    // Reset all selections and filters
+    setSelectedTeacher('');
+    setSelectedClasses([]);
+    setFilters({
+      semesterId: '',
+      departmentId: '',
+      search: '',
+      unassignedOnly: true,
+    });
+    // Reload data
+    loadCourseClasses();
+    loadInitialData();
   };
 
   return (
@@ -270,7 +342,7 @@ const BulkAssignment = ({ onSuccess }) => {
                 <InputLabel>Chọn giáo viên</InputLabel>
                 <Select
                   value={selectedTeacher}
-                  onChange={(e) => setSelectedTeacher(e.target.value)}
+                  onChange={handleTeacherChange}
                   label="Chọn giáo viên"
                   MenuProps={{
                     PaperProps: {
@@ -335,6 +407,31 @@ const BulkAssignment = ({ onSuccess }) => {
                   </Typography>
                 </Grid>
               </Grid>
+
+              {selectedClasses.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" gutterBottom>
+                    <strong>Chi tiết lựa chọn:</strong>
+                  </Typography>
+                  {(() => {
+                    const changes = getAssignmentChanges();
+                    return (
+                      <>
+                        {changes.newAssignments.length > 0 && (
+                          <Typography variant="caption" display="block" color="primary">
+                            • Phân công mới: {changes.newAssignments.length} lớp
+                          </Typography>
+                        )}
+                        {changes.reassignments.length > 0 && (
+                          <Typography variant="caption" display="block" color="warning.main">
+                            • Thay đổi phân công: {changes.reassignments.length} lớp
+                          </Typography>
+                        )}
+                      </>
+                    );
+                  })()}
+                </Box>
+              )}
               
               <Button
                 fullWidth
@@ -365,14 +462,14 @@ const BulkAssignment = ({ onSuccess }) => {
                     variant="outlined"
                     size="small"
                     onClick={handleSelectAll}
-                    startIcon={selectedClasses.length === courseClasses.length ? <ClearIcon /> : <SelectAllIcon />}
+                    startIcon={selectedClasses.length > 0 ? <ClearIcon /> : <SelectAllIcon />}
                   >
-                    {selectedClasses.length === courseClasses.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    {selectedClasses.length > 0 ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
                   </Button>
                   <Button
                     variant="outlined"
                     size="small"
-                    onClick={loadCourseClasses}
+                    onClick={handleRefresh}
                     startIcon={<RefreshIcon />}
                     disabled={loading}
                   >
@@ -427,6 +524,7 @@ const BulkAssignment = ({ onSuccess }) => {
                       value={filters.departmentId}
                       onChange={(e) => handleFilterChange('departmentId', e.target.value)}
                       label="Khoa"
+                      disabled={selectedTeacher ? true : false}
                       MenuProps={{
                         PaperProps: {
                           style: {
@@ -471,50 +569,68 @@ const BulkAssignment = ({ onSuccess }) => {
                 </Alert>
               ) : (
                 <List sx={{ maxHeight: 600, overflow: 'auto' }}>
-                  {courseClasses.map((courseClass) => (
-                    <ListItem
-                      key={courseClass.id}
-                      button
-                      onClick={() => handleClassSelection(courseClass.id)}
-                      selected={selectedClasses.includes(courseClass.id)}
-                    >
-                      <ListItemIcon>
-                        <Checkbox
-                          checked={selectedClasses.includes(courseClass.id)}
-                          onChange={() => handleClassSelection(courseClass.id)}
+                  {courseClasses.map((courseClass) => {
+                    const isAssigned = courseClass.assignments && courseClass.assignments.length > 0;
+                    const assignedTeacher = isAssigned ? courseClass.assignments[0].teacher : null;
+                    
+                    return (
+                      <ListItem
+                        key={courseClass.id}
+                        button
+                        onClick={() => handleClassSelection(courseClass.id)}
+                        selected={selectedClasses.includes(courseClass.id)}
+                        sx={{ 
+                          opacity: isAssigned ? 0.8 : 1,
+                          backgroundColor: isAssigned ? 'action.hover' : 'inherit'
+                        }}
+                      >
+                        <ListItemIcon>
+                          <Checkbox
+                            checked={selectedClasses.includes(courseClass.id)}
+                            onChange={() => handleClassSelection(courseClass.id)}
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="body1" fontWeight="medium">
+                                {courseClass.name}
+                              </Typography>
+                              <Chip
+                                label={courseClass.code}
+                                size="small"
+                                variant="outlined"
+                              />
+                              {isAssigned && (
+                                <Chip
+                                  label={`Giảng viên: ${assignedTeacher.fullName}`}
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                />
+                              )}
+                            </Box>
+                          }
+                          secondary={
+                            <Box>
+                              <Typography variant="caption" display="block">
+                                Học phần: {courseClass.subject?.name} ({courseClass.subject?.credits} tín chỉ)
+                              </Typography>
+                              <Typography variant="caption" display="block">
+                                Kỳ học: {courseClass.semester?.academicYear} - HK{courseClass.semester?.termNumber}
+                              </Typography>
+                              <Typography variant="caption" display="block">
+                                Khoa: {courseClass.subject?.department?.shortName} | 
+                                Sinh viên: {courseClass.studentCount} | 
+                                Tiết: {courseClass.subject?.totalPeriods}
+                                {isAssigned && ` | GV: ${assignedTeacher.code}`}
+                              </Typography>
+                            </Box>
+                          }
                         />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body1" fontWeight="medium">
-                              {courseClass.name}
-                            </Typography>
-                            <Chip
-                              label={courseClass.code}
-                              size="small"
-                              variant="outlined"
-                            />
-                          </Box>
-                        }
-                        secondary={
-                          <Box>
-                            <Typography variant="caption" display="block">
-                              Học phần: {courseClass.subject?.name} ({courseClass.subject?.credits} tín chỉ)
-                            </Typography>
-                            <Typography variant="caption" display="block">
-                              Kỳ học: {courseClass.semester?.academicYear} - HK{courseClass.semester?.termNumber}
-                            </Typography>
-                            <Typography variant="caption" display="block">
-                              Khoa: {courseClass.subject?.department?.shortName} | 
-                              Sinh viên: {courseClass.studentCount} | 
-                              Tiết: {courseClass.subject?.totalPeriods}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                  ))}
+                      </ListItem>
+                    );
+                  })}
                 </List>
               )}
             </CardContent>
@@ -531,21 +647,72 @@ const BulkAssignment = ({ onSuccess }) => {
             <strong>{selectedClasses.length}</strong> lớp học:
           </Typography>
           
-          <List dense sx={{ maxHeight: 300, overflow: 'auto', mt: 2 }}>
-            {getSelectedClassesInfo().map((cls) => (
-              <ListItem key={cls.id}>
-                <ListItemText
-                  primary={cls.name}
-                  secondary={`${cls.subject?.name} - ${cls.semester?.academicYear} Kỳ ${cls.semester?.termNumber}`}
-                />
-              </ListItem>
-            ))}
-          </List>
+          {(() => {
+            const changes = getAssignmentChanges();
+            return (
+              <>
+                {changes.newAssignments.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" color="primary" gutterBottom>
+                      Phân công mới ({changes.newAssignments.length} lớp):
+                    </Typography>
+                    <List dense sx={{ maxHeight: 200, overflow: 'auto', ml: 2 }}>
+                      {changes.newAssignments.map((cls) => (
+                        <ListItem key={cls.id} sx={{ py: 0.5 }}>
+                          <ListItemText
+                            primary={cls.name}
+                            secondary={`${cls.subject?.name} - ${cls.semester?.academicYear} Kỳ ${cls.semester?.termNumber}`}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
 
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            Hành động này sẽ tạo {selectedClasses.length} phân công giáo viên mới. 
-            Hãy chắc chắn điều này là đúng trước khi tiếp tục.
-          </Alert>
+                {changes.reassignments.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" color="warning.main" gutterBottom>
+                      Thay đổi phân công ({changes.reassignments.length} lớp):
+                    </Typography>
+                    <List dense sx={{ maxHeight: 200, overflow: 'auto', ml: 2 }}>
+                      {changes.reassignments.map((cls) => (
+                        <ListItem key={cls.id} sx={{ py: 0.5 }}>
+                          <ListItemText
+                            primary={cls.name}
+                            secondary={
+                              <Box>
+                                <Typography variant="caption" display="block">
+                                  {cls.subject?.name} - {cls.semester?.academicYear} Kỳ {cls.semester?.termNumber}
+                                </Typography>
+                                <Typography variant="caption" color="warning.main" display="block">
+                                  Hiện tại: {cls.assignments[0]?.teacher?.fullName} → Thay bằng: {getSelectedTeacherInfo()?.fullName}
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+              </>
+            );
+          })()}
+
+          {getAssignmentChanges().reassignments.length > 0 ? (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                <strong>Cảnh báo:</strong> Bạn đang thay đổi phân công của {getAssignmentChanges().reassignments.length} lớp đã có giáo viên.
+              </Typography>
+              <Typography variant="body2">
+                Các giáo viên cũ sẽ không còn phụ trách những lớp này. Hãy chắc chắn điều này là đúng.
+              </Typography>
+            </Alert>
+          ) : (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Hành động này sẽ tạo {selectedClasses.length} phân công giáo viên mới.
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialog(false)}>Hủy</Button>
@@ -565,11 +732,45 @@ const BulkAssignment = ({ onSuccess }) => {
         <DialogTitle>Phân công hoàn thành</DialogTitle>
         <DialogContent>
           <Alert severity="success" sx={{ mb: 2 }}>
-            Đã phân công thành công {assignmentResult?.assignedCount} lớp cho {assignmentResult?.teacherName}
+            Đã hoàn thành phân công cho {assignmentResult?.teacherName}
           </Alert>
-          <Typography variant="body2">
-            Phân công hàng loạt đã được hoàn thành thành công. Bạn có thể xem các phân công 
-            trong danh sách phân công chính.
+          
+          {assignmentResult && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                <strong>Tổng kết:</strong>
+              </Typography>
+              <Typography variant="body2" sx={{ ml: 2 }}>
+                • Tổng số lớp xử lý: {assignmentResult.totalProcessed}
+              </Typography>
+              {assignmentResult.createdCount > 0 && (
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  • Phân công mới: {assignmentResult.createdCount} lớp
+                </Typography>
+              )}
+              {assignmentResult.updatedCount > 0 && (
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  • Thay đổi phân công: {assignmentResult.updatedCount} lớp
+                </Typography>
+              )}
+              
+              {assignmentResult.replacedTeachers && assignmentResult.replacedTeachers.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" gutterBottom>
+                    <strong>Các thay đổi:</strong>
+                  </Typography>
+                  {assignmentResult.replacedTeachers.map((replacement, index) => (
+                    <Typography key={index} variant="caption" display="block" sx={{ ml: 2 }}>
+                      • {replacement.className}: {replacement.oldTeacher} → {assignmentResult.teacherName}
+                    </Typography>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          )}
+          
+          <Typography variant="body2" sx={{ mt: 2 }}>
+            Bạn có thể xem các phân công trong danh sách phân công chính.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -582,11 +783,11 @@ const BulkAssignment = ({ onSuccess }) => {
       {/* Snackbar notifications */}
       <Snackbar
         open={!!error}
-        autoHideDuration={6000}
+        autoHideDuration={8000}
         onClose={() => setError('')}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={() => setError('')} severity="error">
+        <Alert onClose={() => setError('')} severity="error" sx={{ whiteSpace: 'pre-line' }}>
           {error}
         </Alert>
       </Snackbar>

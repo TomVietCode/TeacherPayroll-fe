@@ -472,16 +472,6 @@ const TeacherAssignmentList = () => {
         <Typography variant="h4" component="h1">
           {user?.role === ROLES.TEACHER ? 'Phân công của tôi' : 'Phân công giáo viên'}
         </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={loadData}
-            disabled={loading}
-          >
-            Làm mới
-          </Button>
-        </Box>
       </Box>
 
       {/* Tabs - Hide assignment tab for teachers */}

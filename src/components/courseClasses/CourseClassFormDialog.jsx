@@ -18,6 +18,8 @@ import {
   Autocomplete
 } from '@mui/material';
 import { SemesterAPI, SubjectAPI, DepartmentAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { ROLES } from '../../utils/permissions';
 
 const CourseClassFormDialog = ({ 
   open, 
@@ -26,6 +28,7 @@ const CourseClassFormDialog = ({
   isSubmitting = false,
   latestSemester = null
 }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     semesterId: '',
     subjectId: '',
@@ -96,6 +99,11 @@ const CourseClassFormDialog = ({
         setDepartments(departmentsList);
         setFilteredSubjects(subjectsList); // Initialize filtered subjects
         
+        // If user is a teacher, auto-select their department
+        if (user?.role === ROLES.TEACHER && user?.teacher?.departmentId) {
+          setSelectedDepartment(user.teacher.departmentId);
+        }
+        
         // Auto-select closest semester if no latestSemester prop provided
         if (!latestSemester) {
           const closestSemester = findClosestSemester(semestersList);
@@ -114,7 +122,7 @@ const CourseClassFormDialog = ({
     if (open) {
       fetchData();
     }
-  }, [open, latestSemester]);
+  }, [open, latestSemester, user]);
 
   // Filter subjects when department changes
   useEffect(() => {
@@ -142,10 +150,17 @@ const CourseClassFormDialog = ({
         maxStudents: ''
       });
       setSelectedAcademicYear(initialAcademicYear);
-      setSelectedDepartment('');
+      
+      // If user is teacher, auto-select their department, otherwise reset
+      if (user?.role === ROLES.TEACHER && user?.teacher?.departmentId) {
+        setSelectedDepartment(user.teacher.departmentId);
+      } else {
+        setSelectedDepartment('');
+      }
+      
       setErrors({});
     }
-  }, [open, latestSemester, semesters]);
+  }, [open, latestSemester, semesters, user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -175,7 +190,8 @@ const CourseClassFormDialog = ({
       newErrors.semesterId = 'Vui lòng chọn kỳ học';
     }
     
-    if (!selectedDepartment) {
+    // Only validate department selection if user is not a teacher
+    if (user?.role !== ROLES.TEACHER && !selectedDepartment) {
       newErrors.departmentId = 'Vui lòng chọn khoa';
     }
     
@@ -280,37 +296,40 @@ const CourseClassFormDialog = ({
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12} md={6} width={'45%'}>
-                <FormControl fullWidth required error={!!errors.departmentId} size="medium" sx={{ minWidth: '100%' }}>
-                  <InputLabel>Khoa</InputLabel>
-                  <Select
-                    value={selectedDepartment}
-                    onChange={(e) => {
-                      setSelectedDepartment(e.target.value);
-                      if (errors.departmentId) {
-                        setErrors(prev => ({ ...prev, departmentId: null }));
-                      }
-                    }}
-                    label="Khoa"
-                    sx={{ minHeight: 56 }}
-                    disabled={loading}
-                  >
-                    <MenuItem value="">
-                      <em>Chọn khoa trước</em>
-                    </MenuItem>
-                    {departments.map(dept => (
-                      <MenuItem key={dept.id} value={dept.id}>
-                        <Box>
-                          <Typography>
-                            {dept.fullName}
-                          </Typography>
-                        </Box>
+              {/* Only show department selector if user is not a teacher */}
+              {user?.role !== ROLES.TEACHER && (
+                <Grid item xs={12} md={6} width={'45%'}>
+                  <FormControl fullWidth required error={!!errors.departmentId} size="medium" sx={{ minWidth: '100%' }}>
+                    <InputLabel>Khoa</InputLabel>
+                    <Select
+                      value={selectedDepartment}
+                      onChange={(e) => {
+                        setSelectedDepartment(e.target.value);
+                        if (errors.departmentId) {
+                          setErrors(prev => ({ ...prev, departmentId: null }));
+                        }
+                      }}
+                      label="Khoa"
+                      sx={{ minHeight: 56 }}
+                      disabled={loading}
+                    >
+                      <MenuItem value="">
+                        <em>Chọn khoa trước</em>
                       </MenuItem>
-                    ))}
-                  </Select>
-                  {errors.departmentId && <FormHelperText>{errors.departmentId}</FormHelperText>}
-                </FormControl>
-              </Grid>
+                      {departments.map(dept => (
+                        <MenuItem key={dept.id} value={dept.id}>
+                          <Box>
+                            <Typography>
+                              {dept.fullName}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {errors.departmentId && <FormHelperText>{errors.departmentId}</FormHelperText>}
+                  </FormControl>
+                </Grid>
+              )}
 
               <Grid item xs={12} md={6} width={'45%'}>
                 <Autocomplete
@@ -337,11 +356,11 @@ const CourseClassFormDialog = ({
                     <TextField
                       {...params}
                       label="Học phần *"
-                      placeholder={selectedDepartment ? "Tìm kiếm học phần..." : "Vui lòng chọn khoa trước"}
+                      placeholder={selectedDepartment ? "Tìm kiếm học phần..." : (user?.role === ROLES.TEACHER ? "Đang tải học phần..." : "Vui lòng chọn khoa trước")}
                       variant="outlined"
                       fullWidth
                       error={!!errors.subjectId}
-                      helperText={errors.subjectId || (selectedDepartment ? `${filteredSubjects.length} học phần có sẵn` : 'Chọn khoa để hiển thị học phần')}
+                      helperText={errors.subjectId || (selectedDepartment ? `${filteredSubjects.length} học phần có sẵn` : (user?.role === ROLES.TEACHER ? 'Hiển thị học phần thuộc khoa của bạn' : 'Chọn khoa để hiển thị học phần'))}
                       sx={{ 
                         '& .MuiInputBase-root': { minHeight: 56 },
                         minWidth: '100%'
@@ -363,7 +382,7 @@ const CourseClassFormDialog = ({
                   }}
                   size="medium"
                   sx={{ minWidth: '100%' }}
-                  noOptionsText={selectedDepartment ? "Không tìm thấy học phần" : "Vui lòng chọn khoa trước"}
+                  noOptionsText={selectedDepartment ? "Không tìm thấy học phần" : (user?.role === ROLES.TEACHER ? "Đang tải học phần..." : "Vui lòng chọn khoa trước")}
                 />
               </Grid>
               

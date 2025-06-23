@@ -9,7 +9,21 @@ const api = axios.create({
   }
 });
 
-// Add request interceptor for error handling
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -89,6 +103,7 @@ export const TeacherAssignmentAPI = {
 
   // Helper endpoints for quick assignment
   getUnassignedClasses: (params = {}) => api.get('/teacher-assignments/unassigned/classes', { params }),
+  getAllClassesForAssignment: (params = {}) => api.get('/teacher-assignments/all/classes', { params }),
   getTeacherWorkload: (teacherId, params = {}) => api.get(`/teacher-assignments/teacher/${teacherId}/workload`, { params }),
 
   // Statistics and analytics

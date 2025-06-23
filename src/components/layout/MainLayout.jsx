@@ -158,12 +158,12 @@ function MainLayout({ children }) {
       return {
         sections: [
           {
-            title: 'Thông tin cá nhân',
+            title: 'Góc giảng dạy',
             icon: <PeopleIcon />,
             items: [
               { text: 'Thống kê', icon: <EqualizerIcon />, path: '/' },
               { text: 'Lớp học phần', icon: <GroupWorkIcon />, path: '/course-classes' },
-              { text: 'Phân công giảng dạy', icon: <AssignmentIcon />, path: '/teacher-assignments' }
+              { text: 'Lớp được phân công', icon: <AssignmentIcon />, path: '/teacher-assignments' }
             ]
           },
           {
@@ -240,12 +240,7 @@ function MainLayout({ children }) {
       return {
         sections: [
           fullSections[0], // Teacher management
-          fullSections[1], // Class management
-          {
-            ...fullSections[2],
-            items: fullSections[2].items.filter(item => item.path === '/payroll-calculation')
-          },
-          fullSections[3]  // Reports
+          fullSections[1], // Class management  
         ]
       };
     }
