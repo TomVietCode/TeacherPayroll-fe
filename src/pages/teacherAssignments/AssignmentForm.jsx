@@ -231,26 +231,43 @@ const AssignmentForm = () => {
                   <Grid container spacing={3} >
                     {/* Teacher Selection */}
                     <Grid item xs={12} width={"100%"}>
-                      <FormControl fullWidth error={!!errors.teacherId}>
-                        <InputLabel>Giáo viên *</InputLabel>
-                        <Select
-                          value={formData.teacherId}
-                          onChange={(e) => handleFormChange('teacherId', e.target.value)}
-                          label="Giáo viên *"
-                        >
-                          {teachers.map((teacher) => (
-                            <MenuItem key={teacher.id} value={teacher.id}>
-                              <Box>
-                                <Typography variant="body1">{teacher.fullName}</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {teacher.code} - {teacher.department?.shortName}
-                                </Typography>
-                              </Box>
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {errors.teacherId && <FormHelperText>{errors.teacherId}</FormHelperText>}
-                      </FormControl>
+                      <Autocomplete
+                        options={teachers}
+                        getOptionLabel={(option) => `${option.fullName} (${option.code}) - ${option.department?.shortName}`}
+                        value={getSelectedTeacher() || null}
+                        onChange={(event, newValue) => {
+                          handleFormChange('teacherId', newValue?.id || '');
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Giáo viên *"
+                            error={!!errors.teacherId}
+                            helperText={errors.teacherId}
+                            placeholder="Tìm kiếm giáo viên..."
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <Box component="li" {...props}>
+                            <Box>
+                              <Typography variant="body1">{option.fullName}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {option.code} - {option.department?.shortName}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                        filterOptions={(options, { inputValue }) => {
+                          const searchTerm = inputValue.toLowerCase();
+                          return options.filter(teacher => 
+                            teacher.fullName.toLowerCase().includes(searchTerm) ||
+                            teacher.code.toLowerCase().includes(searchTerm) ||
+                            teacher.department?.shortName.toLowerCase().includes(searchTerm) ||
+                            teacher.department?.fullName.toLowerCase().includes(searchTerm)
+                          );
+                        }}
+                        noOptionsText="Không tìm thấy giáo viên"
+                      />
                     </Grid>
 
                     {/* Course Class Selection */}

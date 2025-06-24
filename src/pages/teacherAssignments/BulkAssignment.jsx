@@ -228,11 +228,7 @@ const BulkAssignment = ({ onSuccess }) => {
     }
   };
 
-  const handleTeacherChange = (e) => {
-    const teacherId = e.target.value;
-    setSelectedTeacher(teacherId);
-    // Không cần setFilters ở đây vì đã có useEffect ở trên xử lý
-  };
+
 
   const handleBulkAssignment = async () => {
     try {
@@ -338,32 +334,42 @@ const BulkAssignment = ({ onSuccess }) => {
                 Chọn giáo viên
               </Typography>
               
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Chọn giáo viên</InputLabel>
-                <Select
-                  value={selectedTeacher}
-                  onChange={handleTeacherChange}
-                  label="Chọn giáo viên"
-                  MenuProps={{
-                    PaperProps: {
-                      style: {
-                        maxHeight: 200
-                      }
-                    }
-                  }}
-                >
-                  {teachers.map((teacher) => (
-                    <MenuItem key={teacher.id} value={teacher.id}>
-                      <Box>
-                        <Typography variant="body1">{teacher.fullName}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {teacher.code} - {teacher.department?.shortName}
-                        </Typography>
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                options={teachers}
+                getOptionLabel={(option) => `${option.fullName} (${option.code}) - ${option.department?.shortName}`}
+                value={teachers.find(t => t.id === selectedTeacher) || null}
+                onChange={(event, newValue) => {
+                  setSelectedTeacher(newValue?.id || '');
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Chọn giáo viên"
+                    placeholder="Tìm kiếm giáo viên..."
+                    sx={{ mb: 2 }}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props}>
+                    <Box>
+                      <Typography variant="body1">{option.fullName}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.code} - {option.department?.shortName}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+                filterOptions={(options, { inputValue }) => {
+                  const searchTerm = inputValue.toLowerCase();
+                  return options.filter(teacher => 
+                    teacher.fullName.toLowerCase().includes(searchTerm) ||
+                    teacher.code.toLowerCase().includes(searchTerm) ||
+                    teacher.department?.shortName.toLowerCase().includes(searchTerm) ||
+                    teacher.department?.fullName.toLowerCase().includes(searchTerm)
+                  );
+                }}
+                noOptionsText="Không tìm thấy giáo viên"
+              />
 
               {selectedTeacher && (
                 <Card variant="outlined" sx={{ mb: 2 }}>
