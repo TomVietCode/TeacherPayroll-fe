@@ -128,12 +128,12 @@ const TeachersPage = () => {
   };
 
   const columns = [
-    { id: 'code', label: 'Mã GV', width: '15%' },
-    { id: 'fullName', label: 'Họ và tên', width: '25%' },
+    { id: 'code', label: 'Mã GV', width: '12%' },
+    { id: 'fullName', label: 'Họ và tên', width: '20%' },
     { 
       id: 'dateOfBirth', 
       label: 'Ngày sinh',
-      width: '15%',
+      width: '12%',
       render: (row) => new Date(row.dateOfBirth).toLocaleDateString('vi-VN')
     },
     { 
@@ -147,6 +147,13 @@ const TeachersPage = () => {
       label: 'Bằng cấp',
       width: '15%',
       render: (row) => row.degree?.fullName || 'N/A'
+    },
+    { 
+      id: 'createdAt',
+      label: 'Ngày tạo',
+      width: '16%',
+      render: (row) => new Date(row.createdAt).toLocaleDateString('vi-VN') + ' ' + 
+                       new Date(row.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     }
   ];
 
@@ -189,12 +196,13 @@ const TeachersPage = () => {
         await TeacherAPI.create(formData);
         setSnackbar({
           open: true,
-          message: 'Thêm giáo viên thành công',
+          message: 'Thêm giáo viên thành công - Giáo viên mới sẽ hiển thị ở đầu danh sách',
           severity: 'success'
         });
       }
       setFormOpen(false);
-      fetchTeachers();
+      // Refresh data to show new teacher at the top
+      await fetchTeachers();
     } catch (err) {
       console.error('Error submitting form:', err);
       const errorMessage = err.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.';

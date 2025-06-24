@@ -32,6 +32,14 @@ api.interceptors.response.use(
   }
 );
 
+// Auth API endpoints
+export const AuthAPI = {
+  login: (credentials) => api.post('/auth/login', credentials),
+  logout: () => api.post('/auth/logout'),
+  getCurrentUser: () => api.get('/auth/me'),
+  changePassword: (data) => api.post('/auth/change-password', data),
+};
+
 // Degree API endpoints
 export const DegreeAPI = {
   getAll: () => api.get('/degrees'),

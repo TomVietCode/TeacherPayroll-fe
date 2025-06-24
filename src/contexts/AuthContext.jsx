@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import api from '../services/api';
+import api, { AuthAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await api.get('/auth/me');
+          const response = await AuthAPI.getCurrentUser();
           
           dispatch({
             type: AUTH_ACTIONS.LOGIN_SUCCESS,
@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
       
-      const response = await api.post('/auth/login', credentials);
+      const response = await AuthAPI.login(credentials);
       
       if (response.data.success) {
         const { user, token } = response.data.data;
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      await AuthAPI.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }) => {
   const getCurrentUser = async () => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
-      const response = await api.get('/auth/me');
+      const response = await AuthAPI.getCurrentUser();
       
       if (response.data.success) {
         dispatch({
