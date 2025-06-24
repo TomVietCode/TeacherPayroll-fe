@@ -161,11 +161,11 @@ const DepartmentReportPage = () => {
       });
     } catch (err) {
       console.error('Error exporting Excel:', err);
-      setSnackbar({
-        open: true,
+    setSnackbar({
+      open: true,
         message: 'Không thể xuất file Excel. Vui lòng thử lại sau.',
         severity: 'error'
-      });
+    });
     } finally {
       setLoading(false);
     }

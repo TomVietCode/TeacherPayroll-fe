@@ -79,6 +79,7 @@ const AuthenticatedHeader = ({ onMenuToggle, contentWidth, contentMargin }) => {
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.leavingScreen,
         }),
+        background: 'linear-gradient(135deg, #223771 0%, #1e3264 100%)',
       }}
     >
       <Toolbar>
@@ -92,9 +93,22 @@ const AuthenticatedHeader = ({ onMenuToggle, contentWidth, contentMargin }) => {
           <MenuIcon />
         </IconButton>
         
-        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          Phần mềm tính tiền dạy cho giáo viên
-        </Typography>
+        {/* Logo và tên hệ thống */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}>
+          <Box
+            component="img"
+            src="/src/assets/logo.png"
+            alt="Logo"
+            sx={{
+              height: 40,
+              filter: 'brightness(1.1)',
+              objectFit: 'contain'
+            }}
+          />
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 300 }}>
+            Phần mềm tính tiền dạy cho giáo viên
+          </Typography>
+        </Box>
 
         {/* User info and logout */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

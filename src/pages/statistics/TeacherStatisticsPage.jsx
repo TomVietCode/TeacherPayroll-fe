@@ -99,16 +99,25 @@ const TeacherStatisticsPage = () => {
                   nameKey="shortName"
                   dataKey="count"
                   cx="50%"
-                  cy="50%"
-                  outerRadius={130}
-                  label={({ shortName, count }) => `${shortName}: ${count}`}
+                  cy="45%"
+                  outerRadius={100}
+                  
                 >
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={tooltipFormatter} />
-                <Legend layout="vertical" verticalAlign="bottom" align="center" />
+                <Legend 
+                  layout="horizontal" 
+                  verticalAlign="bottom" 
+                  align="center"
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                    lineHeight: '24px'
+                  }}
+                  iconType="circle"
+                />
               </PieChart>
             </ResponsiveContainer>
           </Paper>
@@ -171,8 +180,8 @@ const TeacherStatisticsPage = () => {
                   nameKey="shortName"
                   dataKey="count"
                   cx="50%"
-                  cy="50%"
-                  outerRadius={130}
+                  cy="45%"
+                  outerRadius={100}
                   label={({ shortName, count }) => `${shortName}: ${count}`}
                 >
                   {pieData.map((entry, index) => (
@@ -180,7 +189,16 @@ const TeacherStatisticsPage = () => {
                   ))}
                 </Pie>
                 <Tooltip formatter={tooltipFormatter} />
-                <Legend layout="vertical" verticalAlign="bottom" align="center" />
+                <Legend 
+                  layout="horizontal" 
+                  verticalAlign="bottom" 
+                  align="center"
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                    lineHeight: '24px'
+                  }}
+                  iconType="circle"
+                />
               </PieChart>
             </ResponsiveContainer>
           </Paper>
@@ -243,8 +261,8 @@ const TeacherStatisticsPage = () => {
                   nameKey="label"
                   dataKey="count"
                   cx="50%"
-                  cy="50%"
-                  outerRadius={130}
+                  cy="45%"
+                  outerRadius={100}
                   label={({ label, count }) => `${label}: ${count}`}
                 >
                   {pieData.map((entry, index) => (
@@ -252,7 +270,16 @@ const TeacherStatisticsPage = () => {
                   ))}
                 </Pie>
                 <Tooltip formatter={tooltipFormatter} />
-                <Legend layout="vertical" verticalAlign="bottom" align="center" />
+                <Legend 
+                  layout="horizontal" 
+                  verticalAlign="bottom" 
+                  align="center"
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                    lineHeight: '24px'
+                  }}
+                  iconType="circle"
+                />
               </PieChart>
             </ResponsiveContainer>
           </Paper>

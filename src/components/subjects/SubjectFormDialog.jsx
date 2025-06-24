@@ -201,6 +201,13 @@ const SubjectFormDialog = ({
                   value={formData.departmentId}
                   onChange={handleChange}
                   label="Khoa phụ trách"
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200
+                      }
+                    }
+                  }}
                 >
                   {departments.map((dept) => (
                     <MenuItem key={dept.id} value={dept.id}>

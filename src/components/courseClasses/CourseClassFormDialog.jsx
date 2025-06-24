@@ -288,7 +288,7 @@ const CourseClassFormDialog = ({
                   >
                     {filteredSemesters.map(semester => (
                       <MenuItem key={semester.id} value={semester.id}>
-                        {semester.displayName || `${semester.termNumber}${semester.isSupplementary ? '-phụ' : ''}`}
+                        {`HK${semester.termNumber}${semester.isSupplementary ? '(Phụ)' : ''}`}
                       </MenuItem>
                     ))}
                   </Select>
@@ -312,6 +312,13 @@ const CourseClassFormDialog = ({
                       label="Khoa"
                       sx={{ minHeight: 56 }}
                       disabled={loading}
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="">
                         <em>Chọn khoa trước</em>
@@ -364,6 +371,13 @@ const CourseClassFormDialog = ({
                       sx={{ 
                         '& .MuiInputBase-root': { minHeight: 56 },
                         minWidth: '100%'
+                      }}
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 200
+                          }
+                        }
                       }}
                     />
                   )}

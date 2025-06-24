@@ -215,7 +215,7 @@ const SubjectsPage = () => {
   };
 
   return (
-    <Box sx={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', p: 3 }}>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -223,7 +223,7 @@ const SubjectsPage = () => {
       )}
 
       {/* Filters */}
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3, flexShrink: 0 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             <FilterIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -290,14 +290,19 @@ const SubjectsPage = () => {
         </CardContent>
       </Card>
 
+      <Box sx={{ flexGrow: 1, minHeight: 0 }}>
       <CustomTable
         columns={columns}
-        data={filteredSubjects}
+          data={filteredSubjects}
         loading={loading}
         onAdd={handleAddSubject}
         onEdit={handleEditSubject}
         onDelete={handleDeleteSubject}
+          pagination={true}
+          showPaginationAlways={true}
+          rowsPerPageOptions={10}
       />
+      </Box>
 
       <SubjectFormDialog 
         open={formOpen}

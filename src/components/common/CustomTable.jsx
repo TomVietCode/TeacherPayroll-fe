@@ -12,10 +12,12 @@ const CustomTable = ({
   onDelete,
   loading = false,
   pagination = true,
-  addButtonLabel = "Thêm mới"
+  addButtonLabel = "Thêm mới",
+  rowsPerPageOptions = 10,
+  showPaginationAlways = false
 }) => {
   const [page, setPage] = useState(1);
-  const rowsPerPage = 10;
+  const rowsPerPage = rowsPerPageOptions;
 
   // Ensure data is always an array
   const safeData = Array.isArray(data) ? data : [];
@@ -39,7 +41,6 @@ const CustomTable = ({
         flexDirection: 'column',
         width: '100%',
         height: '100%',
-        overflow: 'hidden',
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 1,
@@ -70,7 +71,7 @@ const CustomTable = ({
         )}
       </Box>
 
-      <Box sx={{ flexGrow: 1, overflow: 'auto', px: 0 }}>
+      <Box sx={{ flexGrow: 1, overflow: 'auto', px: 0, minHeight: 0 }}>
         <Box 
           component="table" 
           sx={{ 
@@ -226,17 +227,27 @@ const CustomTable = ({
           </Box>
         </Box>
       </Box>
-      {pagination && safeData.length > 0 && (
+      {pagination && (showPaginationAlways || safeData.length > rowsPerPage) && (
         <Box 
           sx={{ 
             display: 'flex',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            p: 1.5,
+            p: 2,
             borderTop: '1px solid',
             borderColor: 'divider',
+            backgroundColor: 'background.default',
+            minHeight: '64px',
+            flexShrink: 0
           }}
         >
+          <Typography variant="body2" color="text.secondary">
+            {safeData.length > 0 ? (
+              `Hiển thị ${Math.min((page - 1) * rowsPerPage + 1, safeData.length)} - ${Math.min(page * rowsPerPage, safeData.length)} của ${safeData.length} bản ghi`
+            ) : (
+              'Không có dữ liệu'
+            )}
+          </Typography>
           <Pagination 
             count={Math.ceil(safeData.length / rowsPerPage)}
             page={page}
@@ -244,10 +255,8 @@ const CustomTable = ({
             color="primary"
             showFirstButton
             showLastButton
+            size="small"
           />
-          <Typography variant="body2" ml={2}>
-            Hiển thị {Math.min((page - 1) * rowsPerPage + 1, safeData.length)} - {Math.min(page * rowsPerPage, safeData.length)} của {safeData.length} bản ghi
-          </Typography>
         </Box>
       )}
     </Box>

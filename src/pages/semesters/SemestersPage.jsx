@@ -42,7 +42,7 @@ const SemestersPage = () => {
       id: 'displayName', 
       label: 'Tên kỳ', 
       width: '20%',
-      render: (row) => row.displayName || `${row.termNumber}${row.isSupplementary ? '-Phụ' : ''}`
+      render: (row) => `HK${row.termNumber}${row.isSupplementary ? '(Phụ)' : ''}`
     },
     { id: 'academicYear', label: 'Năm học', width: '20%' },
     { 

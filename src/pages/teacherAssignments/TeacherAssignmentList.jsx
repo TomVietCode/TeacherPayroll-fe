@@ -240,7 +240,7 @@ const TeacherAssignmentList = () => {
                 label="Tìm kiếm"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                placeholder="Tìm kiếm phân công..."
+                placeholder="Tìm kiếm..."
                 InputProps={{
                   startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
                 }}

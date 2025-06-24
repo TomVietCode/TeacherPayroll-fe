@@ -22,7 +22,8 @@ import {
   Chip,
   CircularProgress,
   Divider,
-  TextField
+  TextField,
+  Autocomplete
 } from '@mui/material';
 import {
   Assessment as AssessmentIcon,
@@ -143,7 +144,7 @@ const TeacherYearlyReportPage = () => {
       
       // Get filename from response headers or create default
       const contentDisposition = response.headers['content-disposition'];
-      let fileName = `bao-cao-tien-day-giao-vien-${reportData.teacher.code}-${selectedAcademicYear}.xlsx`;
+      let fileName = `${reportData.teacher.code}-${selectedAcademicYear}.xlsx`;
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
         if (fileNameMatch) fileName = fileNameMatch[1];
@@ -216,21 +217,34 @@ const TeacherYearlyReportPage = () => {
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={6} md={4} width="30%">
               {canViewAllData(user?.role) ? (
-              <FormControl fullWidth>
-                <InputLabel>Giáo viên</InputLabel>
-                <Select
-                  value={selectedTeacherId}
-                  onChange={(e) => setSelectedTeacherId(e.target.value)}
-                  label="Giáo viên"
+                <Autocomplete
+                  options={teachers}
+                  getOptionLabel={(option) => `${option.fullName} (${option.code})`}
+                  value={teachers.find(t => t.id === selectedTeacherId) || null}
+                  onChange={(event, newValue) => {
+                    setSelectedTeacherId(newValue ? newValue.id : '');
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Giáo viên"
+                      variant="outlined"
+                      fullWidth
+                      disabled={loading}
+                    />
+                  )}
                   disabled={loading}
-                >
-                  {teachers.map(teacher => (
-                    <MenuItem key={teacher.id} value={teacher.id}>
-                      {teacher.fullName} ({teacher.code})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  filterOptions={(options, { inputValue }) => {
+                    const filterValue = inputValue.toLowerCase();
+                    return options.filter(option =>
+                      option.fullName.toLowerCase().includes(filterValue) ||
+                      option.code.toLowerCase().includes(filterValue)
+                    );
+                  }}
+                  noOptionsText="Không tìm thấy giáo viên"
+                  sx={{ minWidth: '100%' }}
+                />
               ) : (
                 <TextField
                   fullWidth
